@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>手寫化學式辨識</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathml-to-latex@1.1.0/dist/mathml-to-latex.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .formula {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 1.5rem;
+        }
+        
+        .processed-image {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <div class="min-h-screen bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 flex flex-col">
+        <header class="bg-primary text-white p-4 shadow-md">
+            <h1 class="text-xl font-bold text-center">手寫化學式辨識</h1>
+        </header>
+
+        <main class="flex-1 container mx-auto p-4 flex flex-col items-center">
+            <div class="mb-4 w-full max-w-lg">
+                <div id="camera-container" class="relative overflow-hidden rounded-lg border-2 border-primary mb-2">
+                    <video id="video" class="w-full h-auto bg-black" autoplay playsinline></video>
+                    <div id="loading" class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
+                        <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary"></div>
+                    </div>
+                </div>
+                <div class="flex space-x-2 mb-4">
+                    <button id="capture-btn" class="bg-primary hover:bg-opacity-90 text-white font-medium py-2 px-4 rounded-lg flex-1">
+                        拍攝
+                    </button>
+                    <button id="flip-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-lg">
+                        切換鏡頭
+                    </button>
+                </div>
+                
+                <div class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    <p>提示：寫出化學式時，請確保字跡清晰，並使用標準的下標表示法（如：H₂O、CO₂）。</p>
+                </div>
+            </div>
+
+            <canvas id="canvas" class="hidden"></canvas>
+            
+            <div id="processed-container" class="w-full max-w-lg mb-4 hidden">
+                <h3 class="text-md font-medium mb-2">處理後的圖像：</h3>
+                <img id="processed-image" class="processed-image rounded-lg" alt="處理後的圖像" />
+            </div>
+
+            <div id="result-container" class="w-full max-w-lg mt-2 p-4 border rounded-lg border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hidden">
+                <h2 class="text-lg font-medium mb-2">辨識結果：</h2>
+                <div id="recognized-formula" class="formula text-center my-2 dark:text-white"></div>
+                <div class="mt-4">
+                    <h3 class="font-medium">原始識別文本：</h3>
+                    <div id="raw-text" class="mt-1 p-2 bg-gray-200 dark:bg-gray-700 rounded text-sm font-mono"></div>
+                </div>
+                <div id="explanation" class="mt-4 text-sm border-t pt-2 border-gray-300 dark:border-gray-700">
+                    <p>注意：本應用使用文字識別技術嘗試辨認化學式。對於複雜的化學式可能需要手動調整。</p>
+                </div>
+            </div>
+
+            <div id="error-message" class="w-full max-w-lg mt-4 p-4 border rounded-lg border-red-300 bg-red-50 text-red-800 dark:border-red-700 dark:bg-red-900 dark:text-red-200 hidden"></div>
+            
+            <div class="w-full max-w-lg mt-6">
+                <h3 class="text-lg font-medium mb-2">常見化學式範例：</h3>
+                <div class="grid grid-cols-2 gap-2 text-sm">
+                    <div class="p-2 bg-gray-100 dark:bg-gray-800 rounded">H₂O - 水</div>
+                    <div class="p-2 bg-gray-100 dark:bg-gray-800 rounded">CO₂ - 二氧化碳</div>
+                    <div class="p-2 bg-gray-100 dark:bg-gray-800 rounded">NaCl - 氯化鈉</div>
+                    <div class="p-2 bg-gray-100 dark:bg-gray-800 rounded">C₆H₁₂O₆ - 葡萄糖</div>
+                    <div class="p-2 bg-gray-100 dark:bg-gray-800 rounded">H₂SO₄ - 硫酸</div>
+                    <div class="p-2 bg-gray-100 dark:bg-gray-800 rounded">CH₃COOH - 醋酸</div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="p-4 text-center text-sm text-gray-600 dark:text-gray-400">
+            手寫化學式辨識應用程式 | <a href="https://github.com/yourusername/chemistry-formula-recognition" target="_blank" class="text-primary hover:underline">GitHub</a>
+        </footer>
+    </div>
+
+    <script>
+        // 檢查暗黑模式
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        // DOM 元素
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const captureBtn = document.getElementById('capture-btn');
+        const flipBtn = document.getElementById('flip-btn');
+        const resultContainer = document.getElementById('result-container');
+        const recognizedFormula = document.getElementById('recognized-formula');
+        const rawText = document.getElementById('raw-text');
+        const explanation = document.getElementById('explanation');
+        const errorMessage = document.getElementById('error-message');
+        const loading = document.getElementById('loading');
+        const processedContainer = document.getElementById('processed-container');
+        const processedImage = document.getElementById('processed-image');
+
+        // 變數
+        let stream = null;
+        let facingMode = 'environment'; // 從後置鏡頭開始
+        
+        // 載入 Tesseract.js 辨識工具
+        const worker = Tesseract.createWorker();
+        
+        // 初始化 Tesseract 辨識工具
+        async function initTesseract() {
+            try {
+                await worker.load();
+                await worker.loadLanguage('eng');
+                await worker.initialize('eng');
+                // 設定辨識選項，優化數學公式識別
+                await worker.setParameters({
+                    tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-=()[]{}_',
+                });
+                console.log('Tesseract 初始化完成');
+            } catch (err) {
+                console.error('Tesseract 初始化失敗:', err);
+                errorMessage.textContent = 'OCR引擎初始化失敗: ' + err.message;
+                errorMessage.classList.remove('hidden');
+            }
+        }
+
+        // 初始化相機
+        async function initCamera() {
+            try {
+                errorMessage.classList.add('hidden');
+                
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                }
+                
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: facingMode },
+                    audio: false
+                });
+                
+                video.srcObject = stream;
+            } catch (err) {
+                console.error('存取相機時出錯:', err);
+                errorMessage.textContent = '無法存取相機：' + err.message;
+                errorMessage.classList.remove('hidden');
+            }
+        }
+
+        // 切換相機
+        flipBtn.addEventListener('click', () => {
+            facingMode = facingMode === 'user' ? 'environment' : 'user';
+            initCamera();
+        });
+        
+        // 處理辨識結果，轉換為化學式格式
+        function processChemicalFormula(text) {
+            // 移除多餘的空格和斷行
+            let formula = text.trim().replace(/\s+/g, '');
+            
+            // 處理數字為下標 (基本處理，實際應用中可能需要更複雜的解析)
+            formula = formula.replace(/([A-Z][a-z]*)(\d+)/g, '$1₍$2₎');
+            
+            // 將 (_number_) 格式轉換為下標
+            formula = formula.replace(/₍([^₎]*)₎/g, (match, p1) => {
+                let subscript = '';
+                for (let i = 0; i < p1.length; i++) {
+                    const char = p1[i];
+                    if (char >= '0' && char <= '9') {
+                        // 將數字轉換為unicode下標
+                        subscript += String.fromCharCode(0x2080 + parseInt(char));
+                    } else {
+                        subscript += char;
+                    }
+                }
+                return subscript;
+            });
+            
+            return formula;
+        }
+        
+        // 前處理圖像以提高辨識率
+        function preprocessImage(canvas) {
+            const ctx = canvas.getContext('2d');
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            
+            // 轉為灰度
+            for (let i = 0; i < data.length; i += 4) {
+                const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+                data[i] = data[i + 1] = data[i + 2] = gray;
+            }
+            
+            // 增加對比度
+            const contrast = 1.5; // 對比度增強係數
+            for (let i = 0; i < data.length; i += 4) {
+                data[i] = Math.min(255, Math.max(0, (data[i] - 128) * contrast + 128));
+                data[i + 1] = data[i];
+                data[i + 2] = data[i];
+            }
+            
+            // 應用二值化
+            const threshold = 150;
+            for (let i = 0; i < data.length; i += 4) {
+                const v = data[i] < threshold ? 0 : 255;
+                data[i] = data[i + 1] = data[i + 2] = v;
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+            
+            // 顯示處理後的圖像
+            processedImage.src = canvas.toDataURL('image/png');
+            processedContainer.classList.remove('hidden');
+            
+            return canvas;
+        }
+
+        // 拍攝圖像
+        captureBtn.addEventListener('click', async () => {
+            if (!stream) {
+                errorMessage.textContent = '請先允許存取相機';
+                errorMessage.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                loading.classList.remove('hidden');
+                resultContainer.classList.add('hidden');
+                errorMessage.classList.add('hidden');
+                processedContainer.classList.add('hidden');
+                
+                // 設置 canvas 尺寸以匹配視頻
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                
+                // 繪製視頻幀到 canvas
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                // 前處理圖像以提高辨識率
+                preprocessImage(canvas);
+                
+                // 使用 Tesseract.js 進行文字辨識
+                const { data } = await worker.recognize(canvas);
+                
+                loading.classList.add('hidden');
+                
+                // 顯示辨識結果
+                const recognizedText = data.text.trim();
+                
+                // 記錄原始辨識文本
+                rawText.textContent = recognizedText;
+                
+                // 處理為化學式格式
+                const formula = processChemicalFormula(recognizedText);
+                
+                // 顯示結果
+                recognizedFormula.textContent = formula;
+                resultContainer.classList.remove('hidden');
+            } catch (err) {
+                loading.classList.add('hidden');
+                console.error('辨識圖像時出錯:', err);
+                errorMessage.textContent = '辨識失敗: ' + err.message;
+                errorMessage.classList.remove('hidden');
+            }
+        });
+
+        // 頁面加載時初始化
+        document.addEventListener('DOMContentLoaded', async () => {
+            await Promise.all([initCamera(), initTesseract()]);
+        });
+    </script>
+</body>
+</html>
