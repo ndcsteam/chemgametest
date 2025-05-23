@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoleculeGenie: 互動化學學習</title>
+    <script src="https://cdn.jsdelivr.net/npm/smiles-drawer@1.2.0/dist/smiles-drawer.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/rdkit@2023.3.3/Code/MinimalLib/dist/RDKit_minimal.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/3dmol@2.0.1/build/3Dmol-min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@4.0.2/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE',
+                        secondary: '#4CAF50',
+                        danger: '#F44336',
+                        warning: '#FFC107',
+                        info: '#2196F3',
+                        success: '#4CAF50',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="dark:bg-gray-900 dark:text-white bg-gray-50 text-gray-900 transition-colors duration-300">
+    <div class="container mx-auto px-4 py-8">
+        <header class="mb-8 text-center">
+            <h1 class="text-4xl font-bold text-primary">MoleculeGenie</h1>
+            <p class="text-lg dark:text-gray-300 text-gray-600">互動式分子設計與化學學習平台</p>
+        </header>
+
+        <div class="flex flex-col md:flex-row gap-6">
+            <!-- Left Panel: Molecule Editor -->
+            <div class="flex-1 bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-semibold mb-4">分子編輯器</h2>
+                
+                <div class="mb-4">
+                    <label class="block mb-2 font-medium">輸入 SMILES 或 從範例中選擇:</label>
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <input id="smiles-input" type="text" placeholder="例如: CC(=O)OC1=CC=CC=C1C(=O)O" 
+                               class="flex-1 p-3 border dark:border-gray-600 dark:bg-gray-700 rounded-md text-base">
+                        <button id="render-btn" class="bg-primary hover:bg-opacity-80 text-white font-medium py-2 px-4 rounded">
+                            渲染
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block mb-2 font-medium">範例分子:</label>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                        <button class="molecule-example p-2 border dark:border-gray-600 dark:bg-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-600 text-sm" data-smiles="CC(=O)OC1=CC=CC=C1C(=O)O">
+                            阿司匹林
+                        </button>
+                        <button class="molecule-example p-2 border dark:border-gray-600 dark:bg-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-600 text-sm" data-smiles="CN1C=NC2=C1C(=O)N(C(=O)N2C)C">
+                            咖啡因
+                        </button>
+                        <button class="molecule-example p-2 border dark:border-gray-600 dark:bg-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-600 text-sm" data-smiles="C1=CC=C2C(=C1)C=CC3=CC=CC=C32">
+                            萘
+                        </button>
+                        <button class="molecule-example p-2 border dark:border-gray-600 dark:bg-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-600 text-sm" data-smiles="CC(C)CC1=CC=C(C=C1)C(C)C(=O)O">
+                            布洛芬
+                        </button>
+                        <button class="molecule-example p-2 border dark:border-gray-600 dark:bg-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-600 text-sm" data-smiles="CCO">
+                            乙醇
+                        </button>
+                        <button class="molecule-example p-2 border dark:border-gray-600 dark:bg-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-600 text-sm" data-smiles="C1=CC=CC=C1">
+                            苯
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="font-medium">2D 結構:</label>
+                        <div class="text-sm">
+                            <button id="clear-btn" class="text-danger hover:text-opacity-80">
+                                清除
+                            </button>
+                        </div>
+                    </div>
+                    <div id="molecule-editor" class="h-64 bg-gray-100 dark:bg-gray-700 flex items-center justify-center rounded-md border dark:border-gray-600">
+                        <div id="molecule-container" class="w-full h-full"></div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block mb-2 font-medium">3D 結構:</label>
+                    <div id="molecule-3d-viewer" class="h-64 bg-gray-100 dark:bg-gray-700 rounded-md border dark:border-gray-600"></div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Properties and Game -->
+            <div class="flex-1 bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+                <div class="tabs flex border-b dark:border-gray-600 mb-6">
+                    <button class="tab-btn py-2 px-4 text-primary font-medium border-b-2 border-primary" data-tab="properties">
+                        分子特性
+                    </button>
+                    <button class="tab-btn py-2 px-4 text-gray-500 dark:text-gray-400 font-medium border-b-2 border-transparent" data-tab="challenges">
+                        化學挑戰
+                    </button>
+                    <button class="tab-btn py-2 px-4 text-gray-500 dark:text-gray-400 font-medium border-b-2 border-transparent" data-tab="quiz">
+                        知識測驗
+                    </button>
+                </div>
+
+                <div id="properties-tab" class="tab-content">
+                    <h3 class="text-xl font-semibold mb-4">預測分子特性</h3>
+                    <div id="properties-loading" class="hidden">
+                        <div class="flex items-center justify-center py-12">
+                            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+                        </div>
+                        <p class="text-center text-gray-500 dark:text-gray-400">計算中...</p>
+                    </div>
+                    <div id="properties-content" class="hidden">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <div class="p-4 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700">
+                                <h4 class="font-medium mb-2">基本特性</h4>
+                                <div id="basic-properties" class="space-y-2 text-sm"></div>
+                            </div>
+                            <div class="p-4 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700">
+                                <h4 class="font-medium mb-2">藥物特性</h4>
+                                <div id="drug-properties" class="space-y-2 text-sm"></div>
+                            </div>
+                        </div>
+                        <div class="border dark:border-gray-600 rounded-md p-4 bg-gray-50 dark:bg-gray-700 mb-6">
+                            <h4 class="font-medium mb-2">毒性預測</h4>
+                            <div class="h-40">
+                                <canvas id="toxicity-chart"></canvas>
+                            </div>
+                        </div>
+                        <div class="border dark:border-gray-600 rounded-md p-4 bg-gray-50 dark:bg-gray-700">
+                            <h4 class="font-medium mb-2">相似藥物</h4>
+                            <div id="similar-drugs" class="grid grid-cols-2 gap-2 text-sm"></div>
+                        </div>
+                    </div>
+                    <div id="no-molecule-message" class="py-12 text-center text-gray-500 dark:text-gray-400">
+                        請在左側輸入或選擇一個分子進行分析
+                    </div>
+                </div>
+
+                <div id="challenges-tab" class="tab-content hidden">
+                    <h3 class="text-xl font-semibold mb-4">化學挑戰</h3>
+                    <div class="mb-6">
+                        <p class="mb-4">嘗試設計符合以下條件的分子:</p>
+                        <div id="current-challenge" class="p-4 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 mb-4">
+                            <h4 class="font-medium mb-2" id="challenge-title">挑戰 #1: 改善溶解度</h4>
+                            <p id="challenge-description" class="text-sm mb-4">設計一個分子，使其LogP值在1到3之間，同時分子量小於300。</p>
+                            <div class="flex items-center">
+                                <span class="mr-2 text-sm">進度:</span>
+                                <div class="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-2.5">
+                                    <div id="challenge-progress" class="bg-primary h-2.5 rounded-full" style="width: 0%"></div>
+                                </div>
+                                <span id="challenge-progress-text" class="ml-2 text-sm">0%</span>
+                            </div>
+                        </div>
+                        <button id="check-challenge-btn" class="bg-primary hover:bg-opacity-80 text-white font-medium py-2 px-4 rounded w-full">
+                            檢查我的分子
+                        </button>
+                    </div>
+                    <div id="challenge-result" class="hidden p-4 border rounded-md mb-6">
+                        <h4 class="font-medium mb-2">結果:</h4>
+                        <p id="challenge-feedback" class="mb-4"></p>
+                        <div class="flex justify-end">
+                            <button id="next-challenge-btn" class="bg-secondary hover:bg-opacity-80 text-white font-medium py-2 px-4 rounded">
+                                下一個挑戰
+                            </button>
+                        </div>
+                    </div>
+                    <div class="border dark:border-gray-600 rounded-md p-4 bg-gray-50 dark:bg-gray-700">
+                        <h4 class="font-medium mb-2">完成的挑戰</h4>
+                        <div id="completed-challenges" class="space-y-2 text-sm">
+                            <p class="text-gray-500 dark:text-gray-400">尚未完成任何挑戰</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="quiz-tab" class="tab-content hidden">
+                    <h3 class="text-xl font-semibold mb-4">化學知識測驗</h3>
+                    <div id="quiz-container">
+                        <div id="quiz-question" class="p-4 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 mb-4">
+                            <h4 class="font-medium mb-2" id="question-title">問題 1:</h4>
+                            <p id="question-text" class="mb-4">以下哪個官能團最有可能增加分子的水溶性?</p>
+                            <div id="answer-options" class="space-y-2">
+                                <div class="flex items-center p-2 border dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer">
+                                    <input type="radio" name="quiz-answer" id="option-1" value="0" class="mr-2">
+                                    <label for="option-1">羥基 (-OH)</label>
+                                </div>
+                                <div class="flex items-center p-2 border dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer">
+                                    <input type="radio" name="quiz-answer" id="option-2" value="1" class="mr-2">
+                                    <label for="option-2">烷基 (-CH₃)</label>
+                                </div>
+                                <div class="flex items-center p-2 border dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer">
+                                    <input type="radio" name="quiz-answer" id="option-3" value="2" class="mr-2">
+                                    <label for="option-3">苯環</label>
+                                </div>
+                                <div class="flex items-center p-2 border dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer">
+                                    <input type="radio" name="quiz-answer" id="option-4" value="3" class="mr-2">
+                                    <label for="option-4">烷基鏈 (-CH₂CH₂CH₃)</label>
+                                </div>
+                            </div>
+                        </div>
+                        <button id="submit-quiz-btn" class="bg-primary hover:bg-opacity-80 text-white font-medium py-2 px-4 rounded w-full mb-4">
+                            提交答案
+                        </button>
+                        <div id="quiz-result" class="hidden p-4 border dark:border-gray-600 rounded-md mb-6">
+                            <h4 class="font-medium mb-2">結果:</h4>
+                            <p id="quiz-feedback" class="mb-4"></p>
+                            <div class="flex justify-end">
+                                <button id="next-question-btn" class="bg-secondary hover:bg-opacity-80 text-white font-medium py-2 px-4 rounded">
+                                    下一題
+                                </button>
+                            </div>
+                        </div>
+                        <div class="border dark:border-gray-600 rounded-md p-4 bg-gray-50 dark:bg-gray-700">
+                            <h4 class="font-medium mb-2">測驗統計</h4>
+                            <div class="grid grid-cols-3 gap-2 text-center">
+                                <div class="p-2 border dark:border-gray-600 rounded-md">
+                                    <div class="text-2xl font-bold" id="quiz-total">0</div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-400">總題數</div>
+                                </div>
+                                <div class="p-2 border dark:border-gray-600 rounded-md">
+                                    <div class="text-2xl font-bold text-success" id="quiz-correct">0</div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-400">答對</div>
+                                </div>
+                                <div class="p-2 border dark:border-gray-600 rounded-md">
+                                    <div class="text-2xl font-bold text-danger" id="quiz-incorrect">0</div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-400">答錯</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
+            <p>MoleculeGenie - 互動式化學學習平台 &copy; 2023</p>
+            <p class="mt-1">基於 JavaScript 模擬 DeepChem 功能實現</p>
+        </footer>
+    </div>
+
+    <script>
+        // Support dark mode
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        // Wait for RDKit to initialize
+        window.onRDKitReady = function() {
+            console.log('RDKit is ready');
+            initApp();
+        };
+
+        // Main application state
+        const appState = {
+            currentMolecule: null,
+            currentSMILES: '',
+            rdkitInstance: null,
+            challenges: [
+                {
+                    id: 1,
+                    title: '挑戰 #1: 改善溶解度',
+                    description: '設計一個分子，使其LogP值在1到3之間，同時分子量小於300。',
+                    check: (properties) => {
+                        const logP = properties.logP;
+                        const mw = properties.molecularWeight;
+                        let progress = 0;
+                        let feedback = '';
+                        
+                        if (logP >= 1 && logP <= 3 && mw < 300) {
+                            progress = 100;
+                            feedback = '恭喜！你成功設計了一個具有良好溶解度特性的分子，LogP = ' + logP.toFixed(2) + '，分子量 = ' + mw.toFixed(2);
+                        } else if (logP >= 1 && logP <= 3) {
+                            progress = 50;
+                            feedback = '你的分子具有合適的LogP值(' + logP.toFixed(2) + ')，但分子量(' + mw.toFixed(2) + ')仍然過大。嘗試減少原子數量。';
+                        } else if (mw < 300) {
+                            progress = 50;
+                            feedback = '你的分子分子量合適(' + mw.toFixed(2) + ')，但LogP值(' + logP.toFixed(2) + ')不在目標範圍內。嘗試調整親水性/親脂性平衡。';
+                        } else {
+                            progress = 20;
+                            feedback = '你的分子未達到任何目標條件。當前LogP = ' + logP.toFixed(2) + '，分子量 = ' + mw.toFixed(2);
+                        }
+                        
+                        return { progress, feedback };
+                    }
+                },
+                {
+                    id: 2,
+                    title: '挑戰 #2: 設計潛在的藥物分子',
+                    description: '設計一個遵循Lipinski五規則的藥物分子（分子量<500，LogP<5，氫鍵受體<10，氫鍵供體<5）。',
+                    check: (properties) => {
+                        const mw = properties.molecularWeight;
+                        const logP = properties.logP;
+                        const hba = properties.hBondAcceptors;
+                        const hbd = properties.hBondDonors;
+                        
+                        let conditions = 0;
+                        let progress = 0;
+                        let feedback = '';
+                        
+                        if (mw < 500) conditions++;
+                        if (logP < 5) conditions++;
+                        if (hba < 10) conditions++;
+                        if (hbd < 5) conditions++;
+                        
+                        progress = Math.round((conditions / 4) * 100);
+                        
+                        if (conditions === 4) {
+                            feedback = '恭喜！你的分子符合所有Lipinski規則，可能是個良好的藥物候選物。';
+                        } else {
+                            feedback = `你的分子符合了${conditions}/4個條件。`;
+                            if (mw >= 500) feedback += ' 分子量過高(' + mw.toFixed(2) + ')。';
+                            if (logP >= 5) feedback += ' LogP過高(' + logP.toFixed(2) + ')。';
+                            if (hba >= 10) feedback += ' 氫鍵受體過多(' + hba + ')。';
+                            if (hbd >= 5) feedback += ' 氫鍵供體過多(' + hbd + ')。';
+                        }
+                        
+                        return { progress, feedback };
+                    }
+                },
+                {
+                    id: 3,
+                    title: '挑戰 #3: 設計低毒性分子',
+                    description: '設計一個具有低毒性特性的分子（低血腦屏障穿透性、低肝臟毒性）。',
+                    check: (properties) => {
+                        // 模擬簡化的毒性預測
+                        const bbb = properties.bbbPermeation;
+                        const tox = properties.liverToxicity;
+                        
+                        let progress = 0;
+                        let feedback = '';
+                        
+                        if (bbb < 0.3 && tox < 0.3) {
+                            progress = 100;
+                            feedback = '太棒了！你設計的分子同時具有低血腦屏障穿透性和低肝臟毒性。';
+                        } else if (bbb < 0.3) {
+                            progress = 50;
+                            feedback = '你的分子具有低血腦屏障穿透性，但肝臟毒性仍然過高(' + tox.toFixed(2) + ')。';
+                        } else if (tox < 0.3) {
+                            progress = 50;
+                            feedback = '你的分子具有低肝臟毒性，但血腦屏障穿透性過高(' + bbb.toFixed(2) + ')。';
+                        } else {
+                            progress = 20;
+                            feedback = '你的分子毒性特徵較高。嘗試減少脂溶性和反應性基團。';
+                        }
+                        
+                        return { progress, feedback };
+                    }
+                }
+            ],
+            currentChallengeIndex: 0,
+            completedChallenges: [],
+            
+            quizQuestions: [
+                {
+                    question: '以下哪個官能團最有可能增加分子的水溶性?',
+                    options: ['羥基 (-OH)', '烷基 (-CH₃)', '苯環', '烷基鏈 (-CH₂CH₂CH₃)'],
+                    correctAnswer: 0,
+                    explanation: '羥基(-OH)能夠通過氫鍵與水分子相互作用，從而增加分子的水溶性。相比之下，烷基、苯環和長鏈烷基都是疏水性的，會減少水溶性。'
+                },
+                {
+                    question: 'Lipinski五規則用於評估什麼特性?',
+                    options: ['生物降解性', '藥物相似性', '反應活性', '熱穩定性'],
+                    correctAnswer: 1,
+                    explanation: 'Lipinski五規則（也稱為五法則）是一組用於評估化合物是否具有藥物相似性的經驗法則，包括分子量<500、LogP<5、氫鍵受體<10和氫鍵供體<5。'
+                },
+                {
+                    question: '藥物設計中，LogP值通常代表什麼特性?',
+                    options: ['分子量', '辛醇-水分配係數', '溶解度', '沸點'],
+                    correctAnswer: 1,
+                    explanation: 'LogP（辛醇-水分配係數）是衡量化合物在辛醇和水之間分配情況的測量值，是評估藥物親脂性的重要參數。較高的LogP值表示化合物更親脂。'
+                },
+                {
+                    question: '以下哪類分子通常具有最高的血腦屏障穿透性?',
+                    options: ['小分子量、高極性分子', '大分子量、低極性分子', '小分子量、低極性分子', '大分子量、高極性分子'],
+                    correctAnswer: 2,
+                    explanation: '小分子量（通常<400 Da）、低極性（脂溶性）的分子通常更容易穿透血腦屏障。這是因為血腦屏障是由緊密連接的內皮細胞組成，它對大多數物質都有選擇性通透性。'
+                },
+                {
+                    question: '以下哪個不是苯環的特性?',
+                    options: ['平面結構', '芳香性', '含有6個碳原子', 'sp3雜化軌道'],
+                    correctAnswer: 3,
+                    explanation: '苯環是一個平面的、芳香性的、由6個碳原子組成的環狀結構，但它的碳原子是sp2雜化的，而不是sp3雜化。sp2雜化允許形成pi鍵，從而產生苯環的芳香性。'
+                }
+            ],
+            currentQuizIndex: 0,
+            quizStats: {
+                total: 0,
+                correct: 0,
+                incorrect: 0
+            }
+        };
+
+        function initApp() {
+            // Initialize RDKit
+            appState.rdkitInstance = window.RDKit();
+            
+            // Setup event listeners
+            setupEventListeners();
+            
+            // Initialize tabs
+            initTabs();
+            
+            // Initialize first challenge and quiz
+            updateChallengeDisplay();
+            updateQuizDisplay();
+        }
+
+        function setupEventListeners() {
+            // Molecule rendering
+            document.getElementById('render-btn').addEventListener('click', renderMolecule);
+            document.getElementById('clear-btn').addEventListener('click', clearMolecule);
+            
+            // Example molecules
+            document.querySelectorAll('.molecule-example').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const smiles = btn.dataset.smiles;
+                    document.getElementById('smiles-input').value = smiles;
+                    renderMolecule();
+                });
+            });
+            
+            // Tab switching
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tabId = btn.dataset.tab;
+                    switchTab(tabId);
+                });
+            });
+            
+            // Challenge buttons
+            document.getElementById('check-challenge-btn').addEventListener('click', checkChallenge);
+            document.getElementById('next-challenge-btn').addEventListener('click', nextChallenge);
+            
+            // Quiz buttons
+            document.getElementById('submit-quiz-btn').addEventListener('click', submitQuizAnswer);
+            document.getElementById('next-question-btn').addEventListener('click', nextQuizQuestion);
+            
+            // Make quiz answer containers clickable
+            document.querySelectorAll('#answer-options > div').forEach(option => {
+                option.addEventListener('click', (e) => {
+                    // If the click wasn't directly on the radio button
+                    if (e.target.tagName !== 'INPUT') {
+                        // Find the radio inside this container and toggle it
+                        const radio = option.querySelector('input[type="radio"]');
+                        radio.checked = true;
+                    }
+                });
+            });
+        }
+
+        function initTabs() {
+            // Make properties tab active by default
+            switchTab('properties');
+        }
+
+        function switchTab(tabId) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.add('hidden');
+            });
+            
+            // Show selected tab content
+            document.getElementById(`${tabId}-tab`).classList.remove('hidden');
+            
+            // Update tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                if (btn.dataset.tab === tabId) {
+                    btn.classList.add('text-primary', 'border-primary');
+                    btn.classList.remove('text-gray-500', 'dark:text-gray-400', 'border-transparent');
+                } else {
+                    btn.classList.remove('text-primary', 'border-primary');
+                    btn.classList.add('text-gray-500', 'dark:text-gray-400', 'border-transparent');
+                }
+            });
+        }
+
+        function renderMolecule() {
+            const smilesInput = document.getElementById('smiles-input').value.trim();
+            
+            if (!smilesInput) {
+                alert('請輸入有效的SMILES字符串');
+                return;
+            }
+            
+            try {
+                // Parse SMILES with RDKit
+                const mol = appState.rdkitInstance.get_mol(smilesInput);
+                
+                if (!mol) {
+                    alert('無法解析SMILES字符串，請檢查格式');
+                    return;
+                }
+                
+                // Store current molecule and SMILES
+                appState.currentMolecule = mol;
+                appState.currentSMILES = smilesInput;
+                
+                // Render 2D structure
+                render2DMolecule(smilesInput);
+                
+                // Render 3D structure
+                render3DMolecule(mol);
+                
+                // Calculate and display properties
+                calculateProperties(mol);
+                
+                // Hide no molecule message
+                document.getElementById('no-molecule-message').classList.add('hidden');
+                
+            } catch (error) {
+                console.error('Rendering error:', error);
+                alert('分子渲染錯誤，請檢查SMILES字符串格式');
+            }
+        }
+
+        function render2DMolecule(smiles) {
+            const container = document.getElementById('molecule-container');
+            container.innerHTML = '';
+            
+            try {
+                // Setup SmilesDrawer
+                const options = {
+                    width: container.clientWidth,
+                    height: container.clientHeight
+                };
+                
+                const smilesDrawer = new window.SmilesDrawer.Drawer(options);
+                
+                SmilesDrawer.parse(smiles, function(tree) {
+                    smilesDrawer.draw(tree, container, 'light', false);
+                });
+            } catch (error) {
+                console.error('2D rendering error:', error);
+                container.innerHTML = '<div class="w-full h-full flex items-center justify-center text-danger">無法繪製2D結構</div>';
+            }
+        }
+
+        function render3DMolecule(mol) {
+            const viewer = document.getElementById('molecule-3d-viewer');
+            viewer.innerHTML = '';
+            
+            try {
+                // Get 3D coordinates
+                const molBlock = mol.get_molblock();
+                
+                // Setup 3Dmol.js viewer
+                const config = { backgroundColor: 'transparent' };
+                const viewer3d = $3Dmol.createViewer(viewer, config);
+                
+                viewer3d.addModel(molBlock, 'mol');
+                viewer3d.setStyle({}, {stick: {radius: 0.2}, sphere: {scale: 0.3}});
+                viewer3d.zoomTo();
+                viewer3d.render();
+            } catch (error) {
+                console.error('3D rendering error:', error);
+                viewer.innerHTML = '<div class="w-full h-full flex items-center justify-center text-danger">無法繪製3D結構</div>';
+            }
+        }
+
+        function clearMolecule() {
+            document.getElementById('smiles-input').value = '';
+            document.getElementById('molecule-container').innerHTML = '';
+            document.getElementById('molecule-3d-viewer').innerHTML = '';
+            document.getElementById('properties-content').classList.add('hidden');
+            document.getElementById('no-molecule-message').classList.remove('hidden');
+            
+            appState.currentMolecule = null;
+            appState.currentSMILES = '';
+        }
+
+        function calculateProperties(mol) {
+            // Show loading state
+            document.getElementById('properties-loading').classList.remove('hidden');
+            document.getElementById('properties-content').classList.add('hidden');
+            
+            // Simulate calculation delay
+            setTimeout(() => {
+                try {
+                    const properties = simulateDeepChemPrediction(mol);
+                    displayMoleculeProperties(properties);
+                    
+                    // Hide loading, show content
+                    document.getElementById('properties-loading').classList.add('hidden');
+                    document.getElementById('properties-content').classList.remove('hidden');
+                } catch (error) {
+                    console.error('Property calculation error:', error);
+                    document.getElementById('properties-loading').classList.add('hidden');
+                    document.getElementById('no-molecule-message').classList.remove('hidden');
+                    document.getElementById('no-molecule-message').textContent = '屬性計算錯誤';
+                }
+            }, 800);
+        }
+
+        function simulateDeepChemPrediction(mol) {
+            // This function simulates DeepChem model predictions
+            // In a real application, this would call actual DeepChem models
+            
+            // Get basic properties
+            const mw = mol.get_mol_wt();
+            const formula = mol.get_formula();
+            const numAtoms = mol.get_num_atoms();
+            const numBonds = mol.get_num_bonds();
+            
+            // Simulate Lipinski properties
+            let logP;
+            let lipinskiViolations = 0;
+            
+            // Calculate logP based on rough atom contributions
+            // This is a simplified model and not chemically accurate
+            const numOxygens = formula.match(/O(\d+)?/);
+            const numNitrogens = formula.match(/N(\d+)?/);
+            const numCarbons = formula.match(/C(\d+)?/);
+            const numHalogens = formula.match(/([FClBrI])(\d+)?/);
+            
+            const oCount = numOxygens ? (numOxygens[1] ? parseInt(numOxygens[1]) : 1) : 0;
+            const nCount = numNitrogens ? (numNitrogens[1] ? parseInt(numNitrogens[1]) : 1) : 0;
+            const cCount = numCarbons ? (numCarbons[1] ? parseInt(numCarbons[1]) : 1) : 0;
+            const halCount = numHalogens ? (numHalogens[2] ? parseInt(numHalogens[2]) : 1) : 0;
+            
+            // Simulate logP calculation
+            logP = (cCount * 0.4) + (halCount * 0.5) - (oCount * 0.3) - (nCount * 0.2);
+            
+            // Estimate H-bond donors and acceptors
+            const hBondDonors = Math.min(oCount + Math.floor(nCount / 2), 8);
+            const hBondAcceptors = oCount + nCount;
+            
+            // Calculate Lipinski violations
+            if (mw > 500) lipinskiViolations++;
+            if (logP > 5) lipinskiViolations++;
+            if (hBondDonors > 5) lipinskiViolations++;
+            if (hBondAcceptors > 10) lipinskiViolations++;
+            
+            // Simulate toxicity predictions
+            const liverToxicity = Math.min(0.9, Math.max(0.1, (logP / 10) + Math.random() * 0.3));
+            const cardioToxicity = Math.min(0.9, Math.max(0.1, (mw / 1000) + Math.random() * 0.3));
+            const mutagenicPotential = Math.min(0.9, Math.max(0.1, (numBonds / 50) + Math.random() * 0.3));
+            const bbbPermeation = Math.min(0.9, Math.max(0.1, (logP / 5) - (mw / 1000) + Math.random() * 0.2));
+            
+            // Generate similar drugs
+            const similarDrugs = generateSimilarDrugs(logP, mw);
+            
+            return {
+                molecularWeight: mw,
+                formula: formula,
+                numAtoms: numAtoms,
+                numBonds: numBonds,
+                logP: logP,
+                hBondDonors: hBondDonors,
+                hBondAcceptors: hBondAcceptors,
+                lipinskiViolations: lipinskiViolations,
+                liverToxicity: liverToxicity,
+                cardioToxicity: cardioToxicity,
+                mutagenicPotential: mutagenicPotential,
+                bbbPermeation: bbbPermeation,
+                similarDrugs: similarDrugs
+            };
+        }
+
+        function generateSimilarDrugs(logP, mw) {
+            // This function simulates finding similar drugs
+            // In a real app, this would query a chemical database
+            
+            const drugDatabase = [
+                { name: '阿司匹林', purpose: '鎮痛藥', similarity: 0 },
+                { name: '布洛芬', purpose: '抗炎藥', similarity: 0 },
+                { name: '對乙醯氨基酚', purpose: '鎮痛藥', similarity: 0 },
+                { name: '咖啡因', purpose: '興奮劑', similarity: 0 },
+                { name: '青黴素', purpose: '抗生素', similarity: 0 },
+                { name: '氟沙星', purpose: '抗生素', similarity: 0 },
+                { name: '氨氯地平', purpose: '降壓藥', similarity: 0 },
+                { name: '辛伐他汀', purpose: '降脂藥', similarity: 0 }
+            ];
+            
+            // Reference properties (simplified)
+            const drugProperties = {
+                '阿司匹林': { logP: 1.2, mw: 180.2 },
+                '布洛芬': { logP: 3.5, mw: 206.3 },
+                '對乙醯氨基酚': { logP: 0.5, mw: 151.2 },
+                '咖啡因': { logP: -0.1, mw: 194.2 },
+                '青黴素': { logP: 1.8, mw: 334.4 },
+                '氟沙星': { logP: 2.6, mw: 319.3 },
+                '氨氯地平': { logP: 3.0, mw: 408.9 },
+                '辛伐他汀': { logP: 4.7, mw: 418.6 }
+            };
+            
+            // Calculate similarity based on logP and mw
+            drugDatabase.forEach(drug => {
+                const refProps = drugProperties[drug.name];
+                const logPDiff = Math.abs(logP - refProps.logP);
+                const mwDiff = Math.abs(mw - refProps.mw) / 100;
+                
+                // Convert differences to similarity (0-100)
+                const logPSimilarity = Math.max(0, 100 - (logPDiff * 25));
+                const mwSimilarity = Math.max(0, 100 - (mwDiff * 10));
+                
+                // Combined similarity
+                drug.similarity = Math.round((logPSimilarity + mwSimilarity) / 2);
+            });
+            
+            // Sort by similarity (highest first)
+            drugDatabase.sort((a, b) => b.similarity - a.similarity);
+            
+            // Return top 4
+            return drugDatabase.slice(0, 4);
+        }
+
+        function displayMoleculeProperties(properties) {
+            // Display basic properties
+            const basicPropsEl = document.getElementById('basic-properties');
+            basicPropsEl.innerHTML = `
+                <div class="flex justify-between">
+                    <span>分子式:</span>
+                    <span class="font-medium">${properties.formula}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>分子量:</span>
+                    <span class="font-medium">${properties.molecularWeight.toFixed(2)}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>原子數:</span>
+                    <span class="font-medium">${properties.numAtoms}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>鍵數:</span>
+                    <span class="font-medium">${properties.numBonds}</span>
+                </div>
+            `;
+            
+            // Display drug-like properties
+            const drugPropsEl = document.getElementById('drug-properties');
+            drugPropsEl.innerHTML = `
+                <div class="flex justify-between">
+                    <span>LogP:</span>
+                    <span class="font-medium">${properties.logP.toFixed(2)}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>氫鍵供體:</span>
+                    <span class="font-medium">${properties.hBondDonors}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>氫鍵受體:</span>
+                    <span class="font-medium">${properties.hBondAcceptors}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Lipinski違反:</span>
+                    <span class="font-medium ${properties.lipinskiViolations > 1 ? 'text-danger' : 'text-success'}">${properties.lipinskiViolations}</span>
+                </div>
+            `;
+            
+            // Display toxicity predictions chart
+            displayToxicityChart(properties);
+            
+            // Display similar drugs
+            displaySimilarDrugs(properties.similarDrugs);
+        }
+
+        function displayToxicityChart(properties) {
+            const ctx = document.getElementById('toxicity-chart').getContext('2d');
+            
+            // Check if there's an existing chart
+            if (window.toxicityChart) {
+                window.toxicityChart.destroy();
+            }
+            
+            // Create a new chart
+            window.toxicityChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['肝臟毒性', '心臟毒性', '致突變性', '血腦屏障穿透性'],
+                    datasets: [{
+                        label: '預測風險指數 (0-1)',
+                        data: [
+                            properties.liverToxicity,
+                            properties.cardioToxicity,
+                            properties.mutagenicPotential,
+                            properties.bbbPermeation
+                        ],
+                        backgroundColor: [
+                            properties.liverToxicity > 0.5 ? '#F44336' : '#4CAF50',
+                            properties.cardioToxicity > 0.5 ? '#F44336' : '#4CAF50',
+                            properties.mutagenicPotential > 0.5 ? '#F44336' : '#4CAF50',
+                            properties.bbbPermeation > 0.5 ? '#F44336' : '#4CAF50'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 1,
+                            grid: {
+                                color: 'rgba(200, 200, 200, 0.2)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        function displaySimilarDrugs(drugs) {
+            const container = document.getElementById('similar-drugs');
+            container.innerHTML = '';
+            
+            if (drugs.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 dark:text-gray-400">沒有找到相似藥物</p>';
+                return;
+            }
+            
+            drugs.forEach(drug => {
+                const drugEl = document.createElement('div');
+                drugEl.className = 'p-2 border dark:border-gray-600 rounded-md';
+                drugEl.innerHTML = `
+                    <div class="font-medium">${drug.name}</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">${drug.purpose}</div>
+                    <div class="mt-1">
+                        <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-1.5">
+                            <div class="bg-primary h-1.5 rounded-full" style="width: ${drug.similarity}%"></div>
+                        </div>
+                        <div class="text-xs text-right mt-0.5">${drug.similarity}% 相似</div>
+                    </div>
+                `;
+                container.appendChild(drugEl);
+            });
+        }
+
+        function updateChallengeDisplay() {
+            const challenge = appState.challenges[appState.currentChallengeIndex];
+            
+            document.getElementById('challenge-title').textContent = challenge.title;
+            document.getElementById('challenge-description').textContent = challenge.description;
+            document.getElementById('challenge-progress').style.width = '0%';
+            document.getElementById('challenge-progress-text').textContent = '0%';
+            
+            // Hide result
+            document.getElementById('challenge-result').classList.add('hidden');
+        }
+
+        function checkChallenge() {
+            if (!appState.currentMolecule) {
+                alert('請先繪製或選擇一個分子');
+                return;
+            }
+            
+            try {
+                // Get current challenge
+                const challenge = appState.challenges[appState.currentChallengeIndex];
+                
+                // Calculate properties for the current molecule
+                const mol = appState.currentMolecule;
+                const properties = simulateDeepChemPrediction(mol);
+                
+                // Check if the challenge is met
+                const result = challenge.check(properties);
+                
+                // Update progress bar
+                document.getElementById('challenge-progress').style.width = `${result.progress}%`;
+                document.getElementById('challenge-progress-text').textContent = `${result.progress}%`;
+                
+                // Show result
+                document.getElementById('challenge-result').classList.remove('hidden');
+                document.getElementById('challenge-feedback').textContent = result.feedback;
+                
+                // If challenge is completed
+                if (result.progress === 100 && !appState.completedChallenges.includes(challenge.id)) {
+                    appState.completedChallenges.push(challenge.id);
+                    updateCompletedChallenges();
+                }
+            } catch (error) {
+                console.error('Challenge check error:', error);
+                alert('挑戰檢查出錯');
+            }
+        }
+
+        function nextChallenge() {
+            // Move to next challenge in the list
+            appState.currentChallengeIndex = (appState.currentChallengeIndex + 1) % appState.challenges.length;
+            
+            // Update challenge display
+            updateChallengeDisplay();
+        }
+
+        function updateCompletedChallenges() {
+            const container = document.getElementById('completed-challenges');
+            
+            if (appState.completedChallenges.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 dark:text-gray-400">尚未完成任何挑戰</p>';
+                return;
+            }
+            
+            container.innerHTML = '';
+            
+            appState.completedChallenges.forEach(id => {
+                const challenge = appState.challenges.find(c => c.id === id);
+                
+                if (challenge) {
+                    const el = document.createElement('div');
+                    el.className = 'p-2 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700';
+                    el.innerHTML = `
+                        <div class="flex items-center">
+                            <svg class="w-4 h-4 text-success mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span>${challenge.title}</span>
+                        </div>
+                    `;
+                    container.appendChild(el);
+                }
+            });
+        }
+
+        function updateQuizDisplay() {
+            const question = appState.quizQuestions[appState.currentQuizIndex];
+            
+            document.getElementById('question-title').textContent = `問題 ${appState.currentQuizIndex + 1}:`;
+            document.getElementById('question-text').textContent = question.question;
+            
+            // Update options
+            const optionsContainer = document.getElementById('answer-options');
+            optionsContainer.innerHTML = '';
+            
+            question.options.forEach((option, index) => {
+                const optionEl = document.createElement('div');
+                optionEl.className = 'flex items-center p-2 border dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer';
+                optionEl.innerHTML = `
+                    <input type="radio" name="quiz-answer" id="option-${index + 1}" value="${index}" class="mr-2">
+                    <label for="option-${index + 1}">${option}</label>
+                `;
+                
+                // Add click handler to the entire div
+                optionEl.addEventListener('click', (e) => {
+                    // If the click wasn't directly on the radio button
+                    if (e.target.tagName !== 'INPUT') {
+                        // Find the radio inside this container and check it
+                        const radio = optionEl.querySelector('input[type="radio"]');
+                        radio.checked = true;
+                    }
+                });
+                
+                optionsContainer.appendChild(optionEl);
+            });
+            
+            // Clear any previous selections
+            document.querySelectorAll('input[name="quiz-answer"]').forEach(radio => {
+                radio.checked = false;
+            });
+            
+            // Hide result
+            document.getElementById('quiz-result').classList.add('hidden');
+        }
+
+        function submitQuizAnswer() {
+            const selectedOption = document.querySelector('input[name="quiz-answer"]:checked');
+            
+            if (!selectedOption) {
+                alert('請選擇一個答案');
+                return;
+            }
+            
+            const selectedAnswer = parseInt(selectedOption.value);
+            const question = appState.quizQuestions[appState.currentQuizIndex];
+            const isCorrect = selectedAnswer === question.correctAnswer;
+            
+            // Show result
+            const resultEl = document.getElementById('quiz-result');
+            resultEl.classList.remove('hidden');
+            
+            if (isCorrect) {
+                resultEl.classList.remove('border-danger', 'bg-danger', 'bg-opacity-10');
+                resultEl.classList.add('border-success', 'bg-success', 'bg-opacity-10');
+                document.getElementById('quiz-feedback').innerHTML = `
+                    <div class="text-success mb-2">正確！</div>
+                    <div>${question.explanation}</div>
+                `;
+                appState.quizStats.correct++;
+            } else {
+                resultEl.classList.remove('border-success', 'bg-success', 'bg-opacity-10');
+                resultEl.classList.add('border-danger', 'bg-danger', 'bg-opacity-10');
+                document.getElementById('quiz-feedback').innerHTML = `
+                    <div class="text-danger mb-2">不正確。正確答案是: ${question.options[question.correctAnswer]}</div>
+                    <div>${question.explanation}</div>
+                `;
+                appState.quizStats.incorrect++;
+            }
+            
+            // Update stats
+            appState.quizStats.total++;
+            updateQuizStats();
+        }
+
+        function nextQuizQuestion() {
+            // Move to next question
+            appState.currentQuizIndex = (appState.currentQuizIndex + 1) % appState.quizQuestions.length;
+            
+            // Update question display
+            updateQuizDisplay();
+        }
+
+        function updateQuizStats() {
+            document.getElementById('quiz-total').textContent = appState.quizStats.total;
+            document.getElementById('quiz-correct').textContent = appState.quizStats.correct;
+            document.getElementById('quiz-incorrect').textContent = appState.quizStats.incorrect;
+        }
+    </script>
+</body>
+</html>
