@@ -7,7 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/smiles-drawer@1.2.0/dist/smiles-drawer.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/rdkit@2023.3.3/Code/MinimalLib/dist/RDKit_minimal.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/3dmol@2.0.1/build/3Dmol-min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked@4.0.2/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@4.0.2/lib/marked.umd.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -493,7 +493,8 @@
             const smilesInput = document.getElementById('smiles-input').value.trim();
             
             if (!smilesInput) {
-                alert('請輸入有效的SMILES字符串');
+                const container = document.getElementById('molecule-container');
+                container.innerHTML = '<div class="w-full h-full flex items-center justify-center text-danger">請輸入有效的SMILES字符串</div>';
                 return;
             }
             
@@ -502,7 +503,8 @@
                 const mol = appState.rdkitInstance.get_mol(smilesInput);
                 
                 if (!mol) {
-                    alert('無法解析SMILES字符串，請檢查格式');
+                    const container = document.getElementById('molecule-container');
+                    container.innerHTML = '<div class="w-full h-full flex items-center justify-center text-danger">無法解析SMILES字符串，請檢查格式</div>';
                     return;
                 }
                 
@@ -524,7 +526,8 @@
                 
             } catch (error) {
                 console.error('Rendering error:', error);
-                alert('分子渲染錯誤，請檢查SMILES字符串格式');
+                const container = document.getElementById('molecule-container');
+                container.innerHTML = '<div class="w-full h-full flex items-center justify-center text-danger">分子渲染錯誤，請檢查SMILES字符串格式</div>';
             }
         }
 
@@ -864,7 +867,16 @@
 
         function checkChallenge() {
             if (!appState.currentMolecule) {
-                alert('請先繪製或選擇一個分子');
+                // 創建一個臨時的通知元素而不是使用alert
+                const notificationEl = document.createElement('div');
+                notificationEl.className = 'fixed top-4 right-4 bg-danger text-white p-3 rounded shadow-lg z-50';
+                notificationEl.textContent = '請先繪製或選擇一個分子';
+                document.body.appendChild(notificationEl);
+                
+                // 3秒後移除通知
+                setTimeout(() => {
+                    notificationEl.remove();
+                }, 3000);
                 return;
             }
             
@@ -894,7 +906,16 @@
                 }
             } catch (error) {
                 console.error('Challenge check error:', error);
-                alert('挑戰檢查出錯');
+                // 創建一個臨時的通知元素而不是使用alert
+                const notificationEl = document.createElement('div');
+                notificationEl.className = 'fixed top-4 right-4 bg-danger text-white p-3 rounded shadow-lg z-50';
+                notificationEl.textContent = '挑戰檢查出錯';
+                document.body.appendChild(notificationEl);
+                
+                // 3秒後移除通知
+                setTimeout(() => {
+                    notificationEl.remove();
+                }, 3000);
             }
         }
 
@@ -979,7 +1000,16 @@
             const selectedOption = document.querySelector('input[name="quiz-answer"]:checked');
             
             if (!selectedOption) {
-                alert('請選擇一個答案');
+                // 創建一個臨時的通知元素而不是使用alert
+                const notificationEl = document.createElement('div');
+                notificationEl.className = 'fixed top-4 right-4 bg-danger text-white p-3 rounded shadow-lg z-50';
+                notificationEl.textContent = '請選擇一個答案';
+                document.body.appendChild(notificationEl);
+                
+                // 3秒後移除通知
+                setTimeout(() => {
+                    notificationEl.remove();
+                }, 3000);
                 return;
             }
             
