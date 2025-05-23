@@ -90,7 +90,9 @@
                         </div>
                     </div>
                     <div id="molecule-editor" class="h-64 bg-gray-100 dark:bg-gray-700 flex items-center justify-center rounded-md border dark:border-gray-600">
-                        <div id="molecule-container" class="w-full h-full"></div>
+                        <div id="molecule-container" class="w-full h-full flex items-center justify-center">
+                            <canvas id="molecule-canvas" class="w-full h-full"></canvas>
+                        </div>
                     </div>
                 </div>
 
@@ -596,22 +598,23 @@
         }
 
         function render2DMolecule(smiles) {
-            const container = document.getElementById('molecule-container');
-            container.innerHTML = '';
-            
             try {
                 if (!window.SmilesDrawer) {
                     throw new Error('SmilesDrawer 函式庫未正確載入');
                 }
                 
-                // 確保容器有正確的尺寸
-                const containerWidth = container.clientWidth || 300; 
-                const containerHeight = container.clientHeight || 200;
+                // 獲取canvas元素
+                const canvas = document.getElementById('molecule-canvas');
+                
+                // 確保canvas有正確的尺寸
+                const container = document.getElementById('molecule-container');
+                canvas.width = container.clientWidth || 300;
+                canvas.height = container.clientHeight || 200;
                 
                 // 設置SmilesDrawer選項
                 const options = {
-                    width: containerWidth,
-                    height: containerHeight,
+                    width: canvas.width,
+                    height: canvas.height,
                     bondThickness: 2,
                     shortBondLength: 0.8,
                     bondSpacing: 5.0,
@@ -622,7 +625,7 @@
                     explicitHydrogens: true
                 };
                 
-                console.log('Rendering 2D structure with SmilesDrawer', {smiles, containerDimensions: {width: containerWidth, height: containerHeight}});
+                console.log('Rendering 2D structure with SmilesDrawer', {smiles, canvasDimensions: {width: canvas.width, height: canvas.height}});
                 
                 // 創建SmilesDrawer實例
                 const smilesDrawer = new SmilesDrawer.Drawer(options);
@@ -630,21 +633,40 @@
                 // 解析SMILES並繪製結構
                 SmilesDrawer.parse(smiles, function(tree) {
                     try {
-                        smilesDrawer.draw(tree, container, 'light', false);
-                        console.log('2D structure drawn successfully');
+                        // 使用canvas繪製
+                        smilesDrawer.draw(tree, canvas, 'light', false);
+                        console.log('2D structure drawn successfully on canvas');
                     } catch (drawError) {
                         console.error('Error during drawing:', drawError);
-                        container.innerHTML = '<div class="w-full h-full flex items-center justify-center text-danger">繪製結構時發生錯誤</div>';
+                        showDrawingError('繪製結構時發生錯誤');
                     }
                 }, function(parseError) {
                     // 解析錯誤回調
                     console.error('SMILES parsing error:', parseError);
-                    container.innerHTML = '<div class="w-full h-full flex items-center justify-center text-danger">無法解析SMILES結構</div>';
+                    showDrawingError('無法解析SMILES結構');
                 });
             } catch (error) {
                 console.error('2D rendering error:', error);
-                container.innerHTML = `<div class="w-full h-full flex items-center justify-center text-danger">無法繪製2D結構: ${error.message}</div>`;
+                showDrawingError(`無法繪製2D結構: ${error.message}`);
             }
+        }
+        
+        // 在canvas區域顯示錯誤信息
+        function showDrawingError(message) {
+            const canvas = document.getElementById('molecule-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 清除畫布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 設置錯誤文本樣式
+            ctx.fillStyle = '#F44336';
+            ctx.font = '16px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // 繪製錯誤信息
+            ctx.fillText(message, canvas.width / 2, canvas.height / 2);
         }
 
         function render3DMolecule(smiles) {
@@ -855,11 +877,22 @@
 
         function clearMolecule() {
             document.getElementById('smiles-input').value = '';
-            document.getElementById('molecule-container').innerHTML = '';
+            
+            // 清除Canvas而不是移除它
+            const canvas = document.getElementById('molecule-canvas');
+            if (canvas && canvas.getContext) {
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+            
+            // 清除3D視圖
             document.getElementById('molecule-3d-viewer').innerHTML = '';
+            
+            // 隱藏属性，顯示提示訊息
             document.getElementById('properties-content').classList.add('hidden');
             document.getElementById('no-molecule-message').classList.remove('hidden');
             
+            // 重置應用狀態
             appState.currentMolecule = null;
             appState.currentSMILES = '';
         }
