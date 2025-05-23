@@ -600,20 +600,50 @@
             container.innerHTML = '';
             
             try {
-                // Setup SmilesDrawer
+                if (!window.SmilesDrawer) {
+                    throw new Error('SmilesDrawer 函式庫未正確載入');
+                }
+                
+                // 確保容器有正確的尺寸
+                const containerWidth = container.clientWidth || 300; 
+                const containerHeight = container.clientHeight || 200;
+                
+                // 設置SmilesDrawer選項
                 const options = {
-                    width: container.clientWidth,
-                    height: container.clientHeight
+                    width: containerWidth,
+                    height: containerHeight,
+                    bondThickness: 2,
+                    shortBondLength: 0.8,
+                    bondSpacing: 5.0,
+                    atomVisualization: 'default',
+                    isomeric: true,
+                    debug: false,
+                    terminalCarbons: true,
+                    explicitHydrogens: true
                 };
                 
-                const smilesDrawer = new window.SmilesDrawer.Drawer(options);
+                console.log('Rendering 2D structure with SmilesDrawer', {smiles, containerDimensions: {width: containerWidth, height: containerHeight}});
                 
+                // 創建SmilesDrawer實例
+                const smilesDrawer = new SmilesDrawer.Drawer(options);
+                
+                // 解析SMILES並繪製結構
                 SmilesDrawer.parse(smiles, function(tree) {
-                    smilesDrawer.draw(tree, container, 'light', false);
+                    try {
+                        smilesDrawer.draw(tree, container, 'light', false);
+                        console.log('2D structure drawn successfully');
+                    } catch (drawError) {
+                        console.error('Error during drawing:', drawError);
+                        container.innerHTML = '<div class="w-full h-full flex items-center justify-center text-danger">繪製結構時發生錯誤</div>';
+                    }
+                }, function(parseError) {
+                    // 解析錯誤回調
+                    console.error('SMILES parsing error:', parseError);
+                    container.innerHTML = '<div class="w-full h-full flex items-center justify-center text-danger">無法解析SMILES結構</div>';
                 });
             } catch (error) {
                 console.error('2D rendering error:', error);
-                container.innerHTML = '<div class="w-full h-full flex items-center justify-center text-danger">無法繪製2D結構</div>';
+                container.innerHTML = `<div class="w-full h-full flex items-center justify-center text-danger">無法繪製2D結構: ${error.message}</div>`;
             }
         }
 
@@ -622,28 +652,204 @@
             viewer.innerHTML = '';
             
             try {
-                // 創建一個簡單的3D分子圖示
-                // 對於詳細的3D結構，通常需要使用專門的工具生成坐標
+                // 獲取分子中的原子類型
+                let hasCarbons = smiles.includes('C');
+                let hasOxygens = smiles.includes('O');
+                let hasNitrogens = smiles.includes('N');
+                let hasHalogens = smiles.match(/([FClBrI])/g);
+                
+                // 創建一個更具代表性的3D分子模型
+                let svgContent = '';
+                
+                // 根據分子類型生成不同的3D模型
+                if (smiles === 'CCO') { // 乙醇
+                    svgContent = `
+                        <svg width="160" height="120" viewBox="0 0 160 120">
+                            <!-- 碳原子 (灰色) -->
+                            <circle cx="40" cy="60" r="12" fill="#909090" />
+                            <circle cx="80" cy="60" r="12" fill="#909090" />
+                            <!-- 氧原子 (紅色) -->
+                            <circle cx="120" cy="60" r="12" fill="#FF4444" />
+                            
+                            <!-- 碳-碳鍵 -->
+                            <line x1="40" y1="60" x2="80" y2="60" stroke="#333" stroke-width="3" />
+                            <!-- 碳-氧鍵 -->
+                            <line x1="80" y1="60" x2="120" y2="60" stroke="#333" stroke-width="3" />
+                            
+                            <!-- 氫原子 (較小的白色圓) -->
+                            <circle cx="40" cy="40" r="6" fill="#FFFFFF" stroke="#333" stroke-width="1" />
+                            <circle cx="30" cy="75" r="6" fill="#FFFFFF" stroke="#333" stroke-width="1" />
+                            <circle cx="50" cy="75" r="6" fill="#FFFFFF" stroke="#333" stroke-width="1" />
+                            
+                            <circle cx="80" cy="40" r="6" fill="#FFFFFF" stroke="#333" stroke-width="1" />
+                            <circle cx="90" cy="75" r="6" fill="#FFFFFF" stroke="#333" stroke-width="1" />
+                            
+                            <!-- 氧上的氫原子 -->
+                            <circle cx="135" cy="50" r="6" fill="#FFFFFF" stroke="#333" stroke-width="1" />
+                            
+                            <!-- 氫鍵 -->
+                            <line x1="40" y1="60" x2="40" y2="40" stroke="#333" stroke-width="1.5" />
+                            <line x1="40" y1="60" x2="30" y2="75" stroke="#333" stroke-width="1.5" />
+                            <line x1="40" y1="60" x2="50" y2="75" stroke="#333" stroke-width="1.5" />
+                            
+                            <line x1="80" y1="60" x2="80" y2="40" stroke="#333" stroke-width="1.5" />
+                            <line x1="80" y1="60" x2="90" y2="75" stroke="#333" stroke-width="1.5" />
+                            
+                            <line x1="120" y1="60" x2="135" y2="50" stroke="#333" stroke-width="1.5" />
+                            
+                            <!-- 標籤 -->
+                            <text x="40" y="60" text-anchor="middle" dy="1" font-size="10" fill="white">C</text>
+                            <text x="80" y="60" text-anchor="middle" dy="1" font-size="10" fill="white">C</text>
+                            <text x="120" y="60" text-anchor="middle" dy="1" font-size="10" fill="white">O</text>
+                            
+                            <text x="40" y="40" text-anchor="middle" font-size="8" fill="black">H</text>
+                            <text x="30" y="75" text-anchor="middle" font-size="8" fill="black">H</text>
+                            <text x="50" y="75" text-anchor="middle" font-size="8" fill="black">H</text>
+                            <text x="80" y="40" text-anchor="middle" font-size="8" fill="black">H</text>
+                            <text x="90" y="75" text-anchor="middle" font-size="8" fill="black">H</text>
+                            <text x="135" y="50" text-anchor="middle" font-size="8" fill="black">H</text>
+                        </svg>
+                    `;
+                } else if (smiles === 'C1=CC=CC=C1') { // 苯
+                    svgContent = `
+                        <svg width="160" height="160" viewBox="0 0 160 160">
+                            <!-- 六角形框架 -->
+                            <polygon points="80,30 130,60 130,120 80,150 30,120 30,60" 
+                                     fill="rgba(200,200,200,0.2)" stroke="#333" stroke-width="1" />
+                            
+                            <!-- 碳原子 -->
+                            <circle cx="80" cy="30" r="10" fill="#909090" />
+                            <circle cx="130" cy="60" r="10" fill="#909090" />
+                            <circle cx="130" cy="120" r="10" fill="#909090" />
+                            <circle cx="80" cy="150" r="10" fill="#909090" />
+                            <circle cx="30" cy="120" r="10" fill="#909090" />
+                            <circle cx="30" cy="60" r="10" fill="#909090" />
+                            
+                            <!-- 鍵 -->
+                            <line x1="80" y1="30" x2="130" y2="60" stroke="#333" stroke-width="3" />
+                            <line x1="130" y1="60" x2="130" y2="120" stroke="#333" stroke-width="3" />
+                            <line x1="130" y1="120" x2="80" y2="150" stroke="#333" stroke-width="3" />
+                            <line x1="80" y1="150" x2="30" y2="120" stroke="#333" stroke-width="3" />
+                            <line x1="30" y1="120" x2="30" y2="60" stroke="#333" stroke-width="3" />
+                            <line x1="30" y1="60" x2="80" y2="30" stroke="#333" stroke-width="3" />
+                            
+                            <!-- 雙鍵表示 (π鍵的簡化表示) -->
+                            <ellipse cx="80" cy="90" rx="30" ry="50" fill="none" stroke="#5D5CDE" stroke-width="2" stroke-dasharray="5,5" />
+                            
+                            <!-- 氫原子 -->
+                            <circle cx="80" cy="10" r="5" fill="#FFFFFF" stroke="#333" stroke-width="1" />
+                            <circle cx="150" cy="60" r="5" fill="#FFFFFF" stroke="#333" stroke-width="1" />
+                            <circle cx="150" cy="120" r="5" fill="#FFFFFF" stroke="#333" stroke-width="1" />
+                            <circle cx="80" cy="170" r="5" fill="#FFFFFF" stroke="#333" stroke-width="1" />
+                            <circle cx="10" cy="120" r="5" fill="#FFFFFF" stroke="#333" stroke-width="1" />
+                            <circle cx="10" cy="60" r="5" fill="#FFFFFF" stroke="#333" stroke-width="1" />
+                            
+                            <!-- 標籤 -->
+                            <text x="80" y="33" text-anchor="middle" font-size="10" fill="white">C</text>
+                            <text x="130" y="63" text-anchor="middle" font-size="10" fill="white">C</text>
+                            <text x="130" y="123" text-anchor="middle" font-size="10" fill="white">C</text>
+                            <text x="80" y="153" text-anchor="middle" font-size="10" fill="white">C</text>
+                            <text x="30" y="123" text-anchor="middle" font-size="10" fill="white">C</text>
+                            <text x="30" y="63" text-anchor="middle" font-size="10" fill="white">C</text>
+                        </svg>
+                    `;
+                } else if (smiles === 'O=C=O') { // 二氧化碳
+                    svgContent = `
+                        <svg width="160" height="80" viewBox="0 0 160 80">
+                            <!-- 氧原子 -->
+                            <circle cx="30" cy="40" r="12" fill="#FF4444" />
+                            <!-- 碳原子 -->
+                            <circle cx="80" cy="40" r="12" fill="#909090" />
+                            <!-- 氧原子 -->
+                            <circle cx="130" cy="40" r="12" fill="#FF4444" />
+                            
+                            <!-- 雙鍵 -->
+                            <line x1="30" y1="35" x2="80" y2="35" stroke="#333" stroke-width="2" />
+                            <line x1="30" y1="45" x2="80" y2="45" stroke="#333" stroke-width="2" />
+                            
+                            <line x1="80" y1="35" x2="130" y2="35" stroke="#333" stroke-width="2" />
+                            <line x1="80" y1="45" x2="130" y2="45" stroke="#333" stroke-width="2" />
+                            
+                            <!-- 標籤 -->
+                            <text x="30" y="43" text-anchor="middle" font-size="14" fill="white">O</text>
+                            <text x="80" y="43" text-anchor="middle" font-size="14" fill="white">C</text>
+                            <text x="130" y="43" text-anchor="middle" font-size="14" fill="white">O</text>
+                        </svg>
+                    `;
+                } else if (smiles === 'CCCC') { // 丁烷
+                    svgContent = `
+                        <svg width="160" height="80" viewBox="0 0 160 80">
+                            <!-- 碳原子 -->
+                            <circle cx="20" cy="40" r="10" fill="#909090" />
+                            <circle cx="60" cy="40" r="10" fill="#909090" />
+                            <circle cx="100" cy="40" r="10" fill="#909090" />
+                            <circle cx="140" cy="40" r="10" fill="#909090" />
+                            
+                            <!-- 碳-碳鍵 -->
+                            <line x1="20" y1="40" x2="60" y2="40" stroke="#333" stroke-width="3" />
+                            <line x1="60" y1="40" x2="100" y2="40" stroke="#333" stroke-width="3" />
+                            <line x1="100" y1="40" x2="140" y2="40" stroke="#333" stroke-width="3" />
+                            
+                            <!-- 標籤 -->
+                            <text x="20" y="43" text-anchor="middle" font-size="10" fill="white">C</text>
+                            <text x="60" y="43" text-anchor="middle" font-size="10" fill="white">C</text>
+                            <text x="100" y="43" text-anchor="middle" font-size="10" fill="white">C</text>
+                            <text x="140" y="43" text-anchor="middle" font-size="10" fill="white">C</text>
+                        </svg>
+                    `;
+                } else {
+                    // 通用分子模型 (對於其他分子)
+                    svgContent = `
+                        <svg width="160" height="160" viewBox="0 0 160 160">
+                            <!-- 背景球體 -->
+                            <circle cx="80" cy="80" r="60" fill="rgba(200,200,200,0.2)" stroke="#333" stroke-width="1" />
+                            
+                            <!-- 根據分子成分添加原子 -->
+                            ${hasCarbons ? '<circle cx="60" cy="60" r="15" fill="#909090" /><text x="60" y="65" text-anchor="middle" font-size="12" fill="white">C</text>' : ''}
+                            ${hasCarbons ? '<circle cx="100" cy="60" r="15" fill="#909090" /><text x="100" y="65" text-anchor="middle" font-size="12" fill="white">C</text>' : ''}
+                            ${hasOxygens ? '<circle cx="80" cy="110" r="15" fill="#FF4444" /><text x="80" y="115" text-anchor="middle" font-size="12" fill="white">O</text>' : ''}
+                            ${hasNitrogens ? '<circle cx="40" cy="100" r="15" fill="#3333FF" /><text x="40" y="105" text-anchor="middle" font-size="12" fill="white">N</text>' : ''}
+                            ${hasHalogens ? '<circle cx="120" cy="100" r="15" fill="#00FF00" /><text x="120" y="105" text-anchor="middle" font-size="12" fill="white">X</text>' : ''}
+                            
+                            <!-- 鍵連接 -->
+                            ${hasCarbons && hasCarbons ? '<line x1="60" y1="60" x2="100" y2="60" stroke="#333" stroke-width="3" />' : ''}
+                            ${hasCarbons && hasOxygens ? '<line x1="80" y1="60" x2="80" y2="110" stroke="#333" stroke-width="3" />' : ''}
+                            ${hasCarbons && hasNitrogens ? '<line x1="60" y1="60" x2="40" y2="100" stroke="#333" stroke-width="3" />' : ''}
+                            ${hasCarbons && hasHalogens ? '<line x1="100" y1="60" x2="120" y2="100" stroke="#333" stroke-width="3" />' : ''}
+                        </svg>
+                    `;
+                }
+                
+                // 添加到界面
                 viewer.innerHTML = `
                     <div class="w-full h-full flex flex-col items-center justify-center">
-                        <svg width="100" height="100" viewBox="0 0 100 100">
-                            <circle cx="50" cy="50" r="40" fill="rgba(200,200,200,0.5)" stroke="#333" stroke-width="1" />
-                            <circle cx="30" cy="30" r="10" fill="#ff6666" />
-                            <circle cx="70" cy="30" r="10" fill="#6666ff" />
-                            <circle cx="50" cy="70" r="10" fill="#66ff66" />
-                            <line x1="30" y1="30" x2="70" y2="30" stroke="#333" stroke-width="2" />
-                            <line x1="30" y1="30" x2="50" y2="70" stroke="#333" stroke-width="2" />
-                            <line x1="70" y1="30" x2="50" y2="70" stroke="#333" stroke-width="2" />
-                        </svg>
-                        <div class="text-center text-xs mt-2">簡化3D模型 (SMILES: ${smiles.substring(0, 20)}${smiles.length > 20 ? '...' : ''})</div>
+                        ${svgContent}
+                        <div class="text-center text-xs mt-4 px-2">
+                            ${getMoleculeModelDescription(smiles)}
+                        </div>
                     </div>
                 `;
                 
-                // 注意：在實際應用中，這裡應該使用一個真正的3D分子模型
-                // 但是在沒有適當的坐標生成工具的情況下，這只是一個視覺占位符
+                console.log('3D model created for: ' + smiles);
+                
             } catch (error) {
                 console.error('3D rendering error:', error);
-                viewer.innerHTML = '<div class="w-full h-full flex items-center justify-center text-danger">無法繪製3D結構</div>';
+                viewer.innerHTML = `<div class="w-full h-full flex items-center justify-center text-danger">無法繪製3D結構: ${error.message}</div>`;
+            }
+        }
+        
+        // 根據SMILES獲取分子描述
+        function getMoleculeModelDescription(smiles) {
+            if (smiles === 'CCO') {
+                return '乙醇分子的3D模型 - 2個碳原子(灰色)和1個氧原子(紅色)，以及相連的氫原子';
+            } else if (smiles === 'C1=CC=CC=C1') {
+                return '苯分子的3D模型 - 6個碳原子組成的環狀結構，具有特殊的π鍵(虛線圓表示)';
+            } else if (smiles === 'O=C=O') {
+                return '二氧化碳分子的3D模型 - 1個碳原子與2個氧原子通過雙鍵連接';
+            } else if (smiles === 'CCCC') {
+                return '丁烷分子的3D模型 - 4個碳原子以直鏈相連';
+            } else {
+                return `分子的簡化3D模型 (SMILES: ${smiles.substring(0, 20)}${smiles.length > 20 ? '...' : ''})`;
             }
         }
 
