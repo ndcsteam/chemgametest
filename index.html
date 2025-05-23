@@ -3,11 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MoleculeGenie: 互動化學學習</title>
+    <title>分子探險家：高中化學互動學習</title>
     <script src="https://cdn.jsdelivr.net/npm/smiles-drawer@1.2.0/dist/smiles-drawer.min.js"></script>
-    <!-- 移除RDKit，使用純JavaScript替代方案 -->
-    <!-- 移除3DMol，使用SVG替代 -->
-    <script src="https://cdn.jsdelivr.net/npm/marked@4.0.2/lib/marked.umd.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -31,53 +28,61 @@
 <body class="dark:bg-gray-900 dark:text-white bg-gray-50 text-gray-900 transition-colors duration-300">
     <div class="container mx-auto px-4 py-8">
         <header class="mb-8 text-center">
-            <h1 class="text-4xl font-bold text-primary">MoleculeGenie</h1>
-            <p class="text-lg dark:text-gray-300 text-gray-600">互動式分子設計與化學學習平台</p>
+            <h1 class="text-4xl font-bold text-primary">分子探險家</h1>
+            <p class="text-lg dark:text-gray-300 text-gray-600">高中化學互動學習平台</p>
+            <div class="mt-2 text-sm inline-block bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 p-2 rounded-md">
+                這個工具幫助你探索分子結構和基本化學性質，適合高中化學學習
+            </div>
         </header>
 
         <div class="flex flex-col md:flex-row gap-6">
-            <!-- Left Panel: Molecule Editor -->
+            <!-- 左側面板: 分子查看器 -->
             <div class="flex-1 bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-                <h2 class="text-2xl font-semibold mb-4">分子編輯器</h2>
+                <h2 class="text-2xl font-semibold mb-4">分子結構查看器</h2>
                 
                 <div class="mb-4">
-                    <label class="block mb-2 font-medium">輸入 SMILES 或 從範例中選擇:</label>
-                    <div class="flex flex-col sm:flex-row gap-2">
-                        <input id="smiles-input" type="text" placeholder="例如: CC(=O)OC1=CC=CC=C1C(=O)O" 
-                               class="flex-1 p-3 border dark:border-gray-600 dark:bg-gray-700 rounded-md text-base">
-                        <button id="render-btn" class="bg-primary hover:bg-opacity-80 text-white font-medium py-2 px-4 rounded">
-                            渲染
-                        </button>
-                    </div>
-                </div>
-
-                <div class="mb-4">
-                    <label class="block mb-2 font-medium">範例分子:</label>
+                    <label class="block mb-2 font-medium">選擇一個常見分子:</label>
                     <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                        <button class="molecule-example p-2 border dark:border-gray-600 dark:bg-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-600 text-sm" data-smiles="CCO">
+                            乙醇 (酒精)
+                        </button>
+                        <button class="molecule-example p-2 border dark:border-gray-600 dark:bg-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-600 text-sm" data-smiles="C1=CC=CC=C1">
+                            苯
+                        </button>
                         <button class="molecule-example p-2 border dark:border-gray-600 dark:bg-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-600 text-sm" data-smiles="CC(=O)OC1=CC=CC=C1C(=O)O">
                             阿司匹林
+                        </button>
+                        <button class="molecule-example p-2 border dark:border-gray-600 dark:bg-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-600 text-sm" data-smiles="O=C=O">
+                            二氧化碳
                         </button>
                         <button class="molecule-example p-2 border dark:border-gray-600 dark:bg-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-600 text-sm" data-smiles="CN1C=NC2=C1C(=O)N(C(=O)N2C)C">
                             咖啡因
                         </button>
-                        <button class="molecule-example p-2 border dark:border-gray-600 dark:bg-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-600 text-sm" data-smiles="C1=CC=C2C(=C1)C=CC3=CC=CC=C32">
-                            萘
+                        <button class="molecule-example p-2 border dark:border-gray-600 dark:bg-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-600 text-sm" data-smiles="CCCC">
+                            丁烷
                         </button>
-                        <button class="molecule-example p-2 border dark:border-gray-600 dark:bg-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-600 text-sm" data-smiles="CC(C)CC1=CC=C(C=C1)C(C)C(=O)O">
-                            布洛芬
-                        </button>
-                        <button class="molecule-example p-2 border dark:border-gray-600 dark:bg-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-600 text-sm" data-smiles="CCO">
-                            乙醇
-                        </button>
-                        <button class="molecule-example p-2 border dark:border-gray-600 dark:bg-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-600 text-sm" data-smiles="C1=CC=CC=C1">
-                            苯
+                    </div>
+                </div>
+                
+                <div class="my-4 p-3 bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-800 rounded-md">
+                    <h3 class="font-medium text-yellow-800 dark:text-yellow-200">什麼是SMILES?</h3>
+                    <p class="text-sm text-yellow-700 dark:text-yellow-300">SMILES是一種用文字表示分子結構的方法。例如，乙醇(CCO)表示2個碳原子加1個氧原子。若想嘗試輸入自己的SMILES，可從範例開始修改。</p>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block mb-2 font-medium">輸入或修改SMILES:</label>
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <input id="smiles-input" type="text" placeholder="例如: CCO (乙醇)" 
+                               class="flex-1 p-3 border dark:border-gray-600 dark:bg-gray-700 rounded-md text-base">
+                        <button id="render-btn" class="bg-primary hover:bg-opacity-80 text-white font-medium py-2 px-4 rounded">
+                            顯示分子
                         </button>
                     </div>
                 </div>
 
                 <div class="mb-4">
                     <div class="flex justify-between items-center mb-2">
-                        <label class="font-medium">2D 結構:</label>
+                        <label class="font-medium">分子結構:</label>
                         <div class="text-sm">
                             <button id="clear-btn" class="text-danger hover:text-opacity-80">
                                 清除
@@ -90,27 +95,27 @@
                 </div>
 
                 <div class="mb-4">
-                    <label class="block mb-2 font-medium">3D 結構:</label>
+                    <label class="block mb-2 font-medium">3D模型示意圖:</label>
                     <div id="molecule-3d-viewer" class="h-64 bg-gray-100 dark:bg-gray-700 rounded-md border dark:border-gray-600"></div>
                 </div>
             </div>
 
-            <!-- Right Panel: Properties and Game -->
+            <!-- 右側面板: 特性和活動 -->
             <div class="flex-1 bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
                 <div class="tabs flex border-b dark:border-gray-600 mb-6">
                     <button class="tab-btn py-2 px-4 text-primary font-medium border-b-2 border-primary" data-tab="properties">
                         分子特性
                     </button>
                     <button class="tab-btn py-2 px-4 text-gray-500 dark:text-gray-400 font-medium border-b-2 border-transparent" data-tab="challenges">
-                        化學挑戰
+                        分子挑戰
                     </button>
                     <button class="tab-btn py-2 px-4 text-gray-500 dark:text-gray-400 font-medium border-b-2 border-transparent" data-tab="quiz">
-                        知識測驗
+                        化學測驗
                     </button>
                 </div>
 
                 <div id="properties-tab" class="tab-content">
-                    <h3 class="text-xl font-semibold mb-4">預測分子特性</h3>
+                    <h3 class="text-xl font-semibold mb-4">分子特性分析</h3>
                     <div id="properties-loading" class="hidden">
                         <div class="flex items-center justify-center py-12">
                             <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
@@ -118,39 +123,45 @@
                         <p class="text-center text-gray-500 dark:text-gray-400">計算中...</p>
                     </div>
                     <div id="properties-content" class="hidden">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div class="grid grid-cols-1 md:grid-cols-1 gap-4 mb-6">
                             <div class="p-4 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700">
                                 <h4 class="font-medium mb-2">基本特性</h4>
                                 <div id="basic-properties" class="space-y-2 text-sm"></div>
                             </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                             <div class="p-4 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700">
-                                <h4 class="font-medium mb-2">藥物特性</h4>
-                                <div id="drug-properties" class="space-y-2 text-sm"></div>
+                                <h4 class="font-medium mb-2">物理特性</h4>
+                                <div id="physical-properties" class="space-y-2 text-sm"></div>
+                            </div>
+                            <div class="p-4 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700">
+                                <h4 class="font-medium mb-2">化學特性</h4>
+                                <div id="chemical-properties" class="space-y-2 text-sm"></div>
                             </div>
                         </div>
                         <div class="border dark:border-gray-600 rounded-md p-4 bg-gray-50 dark:bg-gray-700 mb-6">
-                            <h4 class="font-medium mb-2">毒性預測</h4>
+                            <h4 class="font-medium mb-2">極性和溶解性比較</h4>
                             <div class="h-40">
-                                <canvas id="toxicity-chart"></canvas>
+                                <canvas id="polarity-chart"></canvas>
                             </div>
                         </div>
                         <div class="border dark:border-gray-600 rounded-md p-4 bg-gray-50 dark:bg-gray-700">
-                            <h4 class="font-medium mb-2">相似藥物</h4>
-                            <div id="similar-drugs" class="grid grid-cols-2 gap-2 text-sm"></div>
+                            <h4 class="font-medium mb-2">日常生活應用</h4>
+                            <div id="common-uses" class="space-y-2 text-sm"></div>
                         </div>
                     </div>
                     <div id="no-molecule-message" class="py-12 text-center text-gray-500 dark:text-gray-400">
-                        請在左側輸入或選擇一個分子進行分析
+                        請在左側選擇一個分子來查看它的特性
                     </div>
                 </div>
 
                 <div id="challenges-tab" class="tab-content hidden">
-                    <h3 class="text-xl font-semibold mb-4">化學挑戰</h3>
+                    <h3 class="text-xl font-semibold mb-4">分子挑戰</h3>
                     <div class="mb-6">
-                        <p class="mb-4">嘗試設計符合以下條件的分子:</p>
+                        <p class="mb-4">嘗試找到符合挑戰條件的分子:</p>
                         <div id="current-challenge" class="p-4 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 mb-4">
-                            <h4 class="font-medium mb-2" id="challenge-title">挑戰 #1: 改善溶解度</h4>
-                            <p id="challenge-description" class="text-sm mb-4">設計一個分子，使其LogP值在1到3之間，同時分子量小於300。</p>
+                            <h4 class="font-medium mb-2" id="challenge-title">挑戰 #1: 尋找極性分子</h4>
+                            <p id="challenge-description" class="text-sm mb-4">找到一個含氧的分子，它的極性比丁烷強但比水弱。</p>
                             <div class="flex items-center">
                                 <span class="mr-2 text-sm">進度:</span>
                                 <div class="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-2.5">
@@ -185,23 +196,23 @@
                     <div id="quiz-container">
                         <div id="quiz-question" class="p-4 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 mb-4">
                             <h4 class="font-medium mb-2" id="question-title">問題 1:</h4>
-                            <p id="question-text" class="mb-4">以下哪個官能團最有可能增加分子的水溶性?</p>
+                            <p id="question-text" class="mb-4">以下哪個物質最容易溶於水?</p>
                             <div id="answer-options" class="space-y-2">
                                 <div class="flex items-center p-2 border dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer">
                                     <input type="radio" name="quiz-answer" id="option-1" value="0" class="mr-2">
-                                    <label for="option-1">羥基 (-OH)</label>
+                                    <label for="option-1">乙醇</label>
                                 </div>
                                 <div class="flex items-center p-2 border dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer">
                                     <input type="radio" name="quiz-answer" id="option-2" value="1" class="mr-2">
-                                    <label for="option-2">烷基 (-CH₃)</label>
+                                    <label for="option-2">丁烷</label>
                                 </div>
                                 <div class="flex items-center p-2 border dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer">
                                     <input type="radio" name="quiz-answer" id="option-3" value="2" class="mr-2">
-                                    <label for="option-3">苯環</label>
+                                    <label for="option-3">汽油</label>
                                 </div>
                                 <div class="flex items-center p-2 border dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer">
                                     <input type="radio" name="quiz-answer" id="option-4" value="3" class="mr-2">
-                                    <label for="option-4">烷基鏈 (-CH₂CH₂CH₃)</label>
+                                    <label for="option-4">食用油</label>
                                 </div>
                             </div>
                         </div>
@@ -240,8 +251,8 @@
         </div>
 
         <footer class="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
-            <p>MoleculeGenie - 互動式化學學習平台 &copy; 2023</p>
-            <p class="mt-1">基於 JavaScript 模擬 DeepChem 功能實現</p>
+            <p>分子探險家 - 高中化學互動學習平台 &copy; 2023</p>
+            <p class="mt-1">適合高中化學課程學習使用</p>
         </footer>
     </div>
 
@@ -272,26 +283,26 @@
             challenges: [
                 {
                     id: 1,
-                    title: '挑戰 #1: 改善溶解度',
-                    description: '設計一個分子，使其LogP值在1到3之間，同時分子量小於300。',
+                    title: '挑戰 #1: 尋找極性分子',
+                    description: '找到一個含氧的分子，它的極性比丁烷強但比水弱。提示：試試乙醇(CCO)或其他醇類。',
                     check: (properties) => {
-                        const logP = properties.logP;
-                        const mw = properties.molecularWeight;
+                        const polarity = properties.polarity;
+                        const oCount = properties.formula.match(/O/g) ? properties.formula.match(/O/g).length : 0;
                         let progress = 0;
                         let feedback = '';
                         
-                        if (logP >= 1 && logP <= 3 && mw < 300) {
+                        if (oCount === 0) {
+                            progress = 0;
+                            feedback = '你的分子不含氧原子，請選擇含氧的分子。';
+                        } else if (polarity > 0.2 && polarity < 0.85) {
                             progress = 100;
-                            feedback = '恭喜！你成功設計了一個具有良好溶解度特性的分子，LogP = ' + logP.toFixed(2) + '，分子量 = ' + mw.toFixed(2);
-                        } else if (logP >= 1 && logP <= 3) {
-                            progress = 50;
-                            feedback = '你的分子具有合適的LogP值(' + logP.toFixed(2) + ')，但分子量(' + mw.toFixed(2) + ')仍然過大。嘗試減少原子數量。';
-                        } else if (mw < 300) {
-                            progress = 50;
-                            feedback = '你的分子分子量合適(' + mw.toFixed(2) + ')，但LogP值(' + logP.toFixed(2) + ')不在目標範圍內。嘗試調整親水性/親脂性平衡。';
+                            feedback = '恭喜！你找到了一個合適的中等極性分子。極性值為' + polarity.toFixed(2) + '，介於非極性的丁烷(0.1)和高極性的水(1.0)之間。';
+                        } else if (polarity <= 0.2) {
+                            progress = 30;
+                            feedback = '你的分子極性太低（' + polarity.toFixed(2) + '），接近丁烷的非極性特徵。嘗試加入更多的極性官能團，如-OH或-NH2。';
                         } else {
-                            progress = 20;
-                            feedback = '你的分子未達到任何目標條件。當前LogP = ' + logP.toFixed(2) + '，分子量 = ' + mw.toFixed(2);
+                            progress = 60;
+                            feedback = '你的分子極性太強（' + polarity.toFixed(2) + '），接近水的高極性特徵。嘗試加入一些非極性部分，如碳鏈。';
                         }
                         
                         return { progress, feedback };
@@ -299,33 +310,28 @@
                 },
                 {
                     id: 2,
-                    title: '挑戰 #2: 設計潛在的藥物分子',
-                    description: '設計一個遵循Lipinski五規則的藥物分子（分子量<500，LogP<5，氫鍵受體<10，氫鍵供體<5）。',
+                    title: '挑戰 #2: 找到一個可能是酸的分子',
+                    description: '找到一個化學結構上可能表現為酸的分子。提示：找含有-COOH（羧酸）或-OH（醇）官能團的分子。',
                     check: (properties) => {
-                        const mw = properties.molecularWeight;
-                        const logP = properties.logP;
-                        const hba = properties.hBondAcceptors;
-                        const hbd = properties.hBondDonors;
+                        const isAcid = properties.reactivity.acid === "可能是酸";
+                        const oCount = properties.formula.match(/O/g) ? properties.formula.match(/O/g).length : 0;
+                        const cCount = properties.formula.match(/C/g) ? properties.formula.match(/C/g).length : 0;
                         
-                        let conditions = 0;
                         let progress = 0;
                         let feedback = '';
                         
-                        if (mw < 500) conditions++;
-                        if (logP < 5) conditions++;
-                        if (hba < 10) conditions++;
-                        if (hbd < 5) conditions++;
-                        
-                        progress = Math.round((conditions / 4) * 100);
-                        
-                        if (conditions === 4) {
-                            feedback = '恭喜！你的分子符合所有Lipinski規則，可能是個良好的藥物候選物。';
+                        if (isAcid) {
+                            progress = 100;
+                            feedback = '恭喜！你找到了一個化學結構上可能表現為酸的分子。這類分子通常能夠釋放氫離子(H+)，呈現酸性特徵。';
+                        } else if (oCount >= 2) {
+                            progress = 70;
+                            feedback = '接近了！你的分子含有足夠的氧原子，但可能還需要調整結構。試試加入-COOH（羧酸）官能團。';
+                        } else if (oCount >= 1) {
+                            progress = 40;
+                            feedback = '你的分子含有氧原子，但通常酸分子需要更多的氧原子。試試修改結構以包含更多的氧。';
                         } else {
-                            feedback = `你的分子符合了${conditions}/4個條件。`;
-                            if (mw >= 500) feedback += ' 分子量過高(' + mw.toFixed(2) + ')。';
-                            if (logP >= 5) feedback += ' LogP過高(' + logP.toFixed(2) + ')。';
-                            if (hba >= 10) feedback += ' 氫鍵受體過多(' + hba + ')。';
-                            if (hbd >= 5) feedback += ' 氫鍵供體過多(' + hbd + ')。';
+                            progress = 10;
+                            feedback = '你的分子不太可能是酸，因為它不含氧原子。酸通常是含氧的有機化合物。';
                         }
                         
                         return { progress, feedback };
@@ -333,28 +339,23 @@
                 },
                 {
                     id: 3,
-                    title: '挑戰 #3: 設計低毒性分子',
-                    description: '設計一個具有低毒性特性的分子（低血腦屏障穿透性、低肝臟毒性）。',
+                    title: '挑戰 #3: 找到易溶於水的分子',
+                    description: '找到一個水溶性好的分子（與「油」的特性相反）。提示：極性強的分子通常易溶於水。',
                     check: (properties) => {
-                        // 模擬簡化的毒性預測
-                        const bbb = properties.bbbPermeation;
-                        const tox = properties.liverToxicity;
+                        const waterSolubility = properties.waterSolubility;
                         
                         let progress = 0;
                         let feedback = '';
                         
-                        if (bbb < 0.3 && tox < 0.3) {
+                        if (waterSolubility >= 0.7) {
                             progress = 100;
-                            feedback = '太棒了！你設計的分子同時具有低血腦屏障穿透性和低肝臟毒性。';
-                        } else if (bbb < 0.3) {
-                            progress = 50;
-                            feedback = '你的分子具有低血腦屏障穿透性，但肝臟毒性仍然過高(' + tox.toFixed(2) + ')。';
-                        } else if (tox < 0.3) {
-                            progress = 50;
-                            feedback = '你的分子具有低肝臟毒性，但血腦屏障穿透性過高(' + bbb.toFixed(2) + ')。';
+                            feedback = '太棒了！你找到了一個易溶於水的分子，水溶性值為' + waterSolubility.toFixed(2) + '。這類分子通常含有極性官能團，如-OH、-NH2或-COOH。';
+                        } else if (waterSolubility >= 0.4) {
+                            progress = 60;
+                            feedback = '你的分子有一定的水溶性（' + waterSolubility.toFixed(2) + '），但還可以進一步提高。嘗試加入更多極性官能團。';
                         } else {
                             progress = 20;
-                            feedback = '你的分子毒性特徵較高。嘗試減少脂溶性和反應性基團。';
+                            feedback = '你的分子水溶性較差（' + waterSolubility.toFixed(2) + '），可能更容易溶於油而非水。嘗試減少碳氫鏈的長度，增加極性部分。';
                         }
                         
                         return { progress, feedback };
@@ -366,34 +367,40 @@
             
             quizQuestions: [
                 {
-                    question: '以下哪個官能團最有可能增加分子的水溶性?',
-                    options: ['羥基 (-OH)', '烷基 (-CH₃)', '苯環', '烷基鏈 (-CH₂CH₂CH₃)'],
+                    question: '以下哪個物質最容易溶於水?',
+                    options: ['乙醇', '丁烷', '汽油', '食用油'],
                     correctAnswer: 0,
-                    explanation: '羥基(-OH)能夠通過氫鍵與水分子相互作用，從而增加分子的水溶性。相比之下，烷基、苯環和長鏈烷基都是疏水性的，會減少水溶性。'
+                    explanation: '乙醇(CH₃CH₂OH)分子中含有極性的-OH基團，能與水分子形成氫鍵，因此比其他選項更容易溶於水。丁烷、汽油和食用油都是非極性物質，不易溶於水。'
                 },
                 {
-                    question: 'Lipinski五規則用於評估什麼特性?',
-                    options: ['生物降解性', '藥物相似性', '反應活性', '熱穩定性'],
+                    question: '下列哪種物質能導電?',
+                    options: ['純水', '食鹽水溶液', '糖水', '酒精'],
                     correctAnswer: 1,
-                    explanation: 'Lipinski五規則（也稱為五法則）是一組用於評估化合物是否具有藥物相似性的經驗法則，包括分子量<500、LogP<5、氫鍵受體<10和氫鍵供體<5。'
+                    explanation: '食鹽(NaCl)溶於水後會解離成Na⁺和Cl⁻離子，這些離子能自由移動並傳導電流。純水、糖水和酒精中不含有可移動的離子，因此不能有效導電。'
                 },
                 {
-                    question: '藥物設計中，LogP值通常代表什麼特性?',
-                    options: ['分子量', '辛醇-水分配係數', '溶解度', '沸點'],
-                    correctAnswer: 1,
-                    explanation: 'LogP（辛醇-水分配係數）是衡量化合物在辛醇和水之間分配情況的測量值，是評估藥物親脂性的重要參數。較高的LogP值表示化合物更親脂。'
-                },
-                {
-                    question: '以下哪類分子通常具有最高的血腦屏障穿透性?',
-                    options: ['小分子量、高極性分子', '大分子量、低極性分子', '小分子量、低極性分子', '大分子量、高極性分子'],
+                    question: '以下哪個特性可以幫助我們區分酸和鹼?',
+                    options: ['沸點', '密度', 'pH值', '顏色'],
                     correctAnswer: 2,
-                    explanation: '小分子量（通常<400 Da）、低極性（脂溶性）的分子通常更容易穿透血腦屏障。這是因為血腦屏障是由緊密連接的內皮細胞組成，它對大多數物質都有選擇性通透性。'
+                    explanation: 'pH值是測量溶液酸鹼度的標準。酸的pH值小於7，鹼的pH值大於7。酸和鹼的沸點、密度和顏色各不相同，不能作為普遍的區分標準。'
                 },
                 {
-                    question: '以下哪個不是苯環的特性?',
-                    options: ['平面結構', '芳香性', '含有6個碳原子', 'sp3雜化軌道'],
+                    question: '為什麼肥皂能清洗油污?',
+                    options: ['因為肥皂是酸性的', '因為肥皂能分解油污', '因為肥皂分子既有親水部分又有親油部分', '因為肥皂能增加水的溫度'],
+                    correctAnswer: 2,
+                    explanation: '肥皂分子有親水性的頭部和親油性的尾部。親油部分能溶解油污，而親水部分能與水結合，從而使油污從表面分離並被沖走。這種結構使肥皂成為表面活性劑。'
+                },
+                {
+                    question: '下列哪個不是有機化合物的特徵?',
+                    options: ['含有碳原子', '常溫下一般為液體或固體', '通常可以燃燒', '通常導電性好'],
                     correctAnswer: 3,
-                    explanation: '苯環是一個平面的、芳香性的、由6個碳原子組成的環狀結構，但它的碳原子是sp2雜化的，而不是sp3雜化。sp2雜化允許形成pi鍵，從而產生苯環的芳香性。'
+                    explanation: '大多數有機化合物不導電，因為它們通常不能形成離子。有機化合物的特徵包括含有碳原子、多數在常溫下為液體或固體、可以燃燒等。'
+                },
+                {
+                    question: '為什麼油和水不互溶?',
+                    options: ['油的密度比水小', '油分子和水分子的極性不同', '油的沸點比水高', '油的分子量比水大'],
+                    correctAnswer: 1,
+                    explanation: '水是極性分子，而油主要由非極性分子組成。極性相似的物質才容易互溶（相似相溶原理）。雖然油的密度確實比水小，但這只解釋了為什麼油浮在水上，而非不互溶的原因。'
                 }
             ],
             currentQuizIndex: 0,
@@ -675,21 +682,13 @@
         }
 
         function simulateDeepChemPrediction(mol) {
-            // This function simulates DeepChem model predictions
-            // In a real application, this would call actual DeepChem models
-            
-            // Get basic properties
+            // 取得基本特性
             const mw = mol.get_mol_wt();
             const formula = mol.get_formula();
             const numAtoms = mol.get_num_atoms();
             const numBonds = mol.get_num_bonds();
             
-            // Simulate Lipinski properties
-            let logP;
-            let lipinskiViolations = 0;
-            
-            // Calculate logP based on rough atom contributions
-            // This is a simplified model and not chemically accurate
+            // 計算各種原子數量
             const numOxygens = formula.match(/O(\d+)?/);
             const numNitrogens = formula.match(/N(\d+)?/);
             const numCarbons = formula.match(/C(\d+)?/);
@@ -700,95 +699,107 @@
             const cCount = numCarbons ? (numCarbons[1] ? parseInt(numCarbons[1]) : 1) : 0;
             const halCount = numHalogens ? (numHalogens[2] ? parseInt(numHalogens[2]) : 1) : 0;
             
-            // Simulate logP calculation
-            logP = (cCount * 0.4) + (halCount * 0.5) - (oCount * 0.3) - (nCount * 0.2);
+            // 計算物理及化學性質
+            // 計算極性 (根據含氧和含氮原子數)
+            const polarity = Math.min(1.0, Math.max(0.1, (oCount * 0.3 + nCount * 0.2) / (cCount + 1)));
             
-            // Estimate H-bond donors and acceptors
-            const hBondDonors = Math.min(oCount + Math.floor(nCount / 2), 8);
-            const hBondAcceptors = oCount + nCount;
+            // 估計水溶性 (受極性影響)
+            const waterSolubility = Math.min(1.0, Math.max(0.1, polarity - (cCount * 0.05)));
             
-            // Calculate Lipinski violations
-            if (mw > 500) lipinskiViolations++;
-            if (logP > 5) lipinskiViolations++;
-            if (hBondDonors > 5) lipinskiViolations++;
-            if (hBondAcceptors > 10) lipinskiViolations++;
+            // 估計熔點 (根據分子大小和鍵數)
+            const meltingPoint = Math.min(300, Math.max(-100, (mw / 10) + (numBonds * 2) - 20));
             
-            // Simulate toxicity predictions
-            const liverToxicity = Math.min(0.9, Math.max(0.1, (logP / 10) + Math.random() * 0.3));
-            const cardioToxicity = Math.min(0.9, Math.max(0.1, (mw / 1000) + Math.random() * 0.3));
-            const mutagenicPotential = Math.min(0.9, Math.max(0.1, (numBonds / 50) + Math.random() * 0.3));
-            const bbbPermeation = Math.min(0.9, Math.max(0.1, (logP / 5) - (mw / 1000) + Math.random() * 0.2));
+            // 估計沸點
+            const boilingPoint = meltingPoint + 100 + (cCount * 10);
             
-            // Generate similar drugs
-            const similarDrugs = generateSimilarDrugs(logP, mw);
+            // 估計密度
+            const density = Math.min(3.0, Math.max(0.5, 0.8 + (oCount * 0.1) + (nCount * 0.05)));
+            
+            // 估計反應活性
+            const reactivity = {
+                oxidation: oCount > 0 ? "低" : "高",
+                reduction: nCount > 0 ? "中" : "低",
+                acid: (oCount > 1 && cCount > 1) ? "可能是酸" : "非酸性",
+                base: nCount > 0 ? "可能是鹼" : "非鹼性"
+            };
+            
+            // 生成常見用途
+            const commonUses = generateCommonUses(formula, cCount, oCount, nCount);
             
             return {
                 molecularWeight: mw,
                 formula: formula,
                 numAtoms: numAtoms,
                 numBonds: numBonds,
-                logP: logP,
-                hBondDonors: hBondDonors,
-                hBondAcceptors: hBondAcceptors,
-                lipinskiViolations: lipinskiViolations,
-                liverToxicity: liverToxicity,
-                cardioToxicity: cardioToxicity,
-                mutagenicPotential: mutagenicPotential,
-                bbbPermeation: bbbPermeation,
-                similarDrugs: similarDrugs
+                
+                // 物理性質
+                polarity: polarity,
+                waterSolubility: waterSolubility,
+                meltingPoint: meltingPoint,
+                boilingPoint: boilingPoint,
+                density: density,
+                
+                // 化學性質
+                reactivity: reactivity,
+                
+                // 日常應用
+                commonUses: commonUses
             };
         }
 
-        function generateSimilarDrugs(logP, mw) {
-            // This function simulates finding similar drugs
-            // In a real app, this would query a chemical database
+        function generateCommonUses(formula, cCount, oCount, nCount) {
+            // 根據分子組成推測可能的用途
+            let uses = [];
             
-            const drugDatabase = [
-                { name: '阿司匹林', purpose: '鎮痛藥', similarity: 0 },
-                { name: '布洛芬', purpose: '抗炎藥', similarity: 0 },
-                { name: '對乙醯氨基酚', purpose: '鎮痛藥', similarity: 0 },
-                { name: '咖啡因', purpose: '興奮劑', similarity: 0 },
-                { name: '青黴素', purpose: '抗生素', similarity: 0 },
-                { name: '氟沙星', purpose: '抗生素', similarity: 0 },
-                { name: '氨氯地平', purpose: '降壓藥', similarity: 0 },
-                { name: '辛伐他汀', purpose: '降脂藥', similarity: 0 }
-            ];
+            // 常見的簡單分子
+            if (formula === "CH4") {
+                uses.push("天然氣的主要成分");
+                uses.push("用作燃料");
+            } else if (formula === "C2H6O" || formula === "CCO") {
+                uses.push("醫用酒精消毒");
+                uses.push("化學實驗中的溶劑");
+                uses.push("酒精飲料的主要成分");
+            } else if (formula === "CO2" || formula === "O=C=O") {
+                uses.push("碳酸飲料的氣泡成分");
+                uses.push("植物光合作用的原料");
+                uses.push("乾冰（固態二氧化碳）用於降溫");
+            } else if (formula === "C6H6" || formula === "C1=CC=CC=C1") {
+                uses.push("有機化學合成的基本原料");
+                uses.push("溶劑（注意：有毒性）");
+            } else if (formula === "CCCC") {
+                uses.push("石油氣（丁烷）的成分");
+                uses.push("打火機的燃料");
+            }
             
-            // Reference properties (simplified)
-            const drugProperties = {
-                '阿司匹林': { logP: 1.2, mw: 180.2 },
-                '布洛芬': { logP: 3.5, mw: 206.3 },
-                '對乙醯氨基酚': { logP: 0.5, mw: 151.2 },
-                '咖啡因': { logP: -0.1, mw: 194.2 },
-                '青黴素': { logP: 1.8, mw: 334.4 },
-                '氟沙星': { logP: 2.6, mw: 319.3 },
-                '氨氯地平': { logP: 3.0, mw: 408.9 },
-                '辛伐他汀': { logP: 4.7, mw: 418.6 }
-            };
+            // 根據原子組成猜測
+            if (cCount > 4 && oCount > 1) {
+                uses.push("可能有香味，用於香料或食品添加劑");
+            }
             
-            // Calculate similarity based on logP and mw
-            drugDatabase.forEach(drug => {
-                const refProps = drugProperties[drug.name];
-                const logPDiff = Math.abs(logP - refProps.logP);
-                const mwDiff = Math.abs(mw - refProps.mw) / 100;
-                
-                // Convert differences to similarity (0-100)
-                const logPSimilarity = Math.max(0, 100 - (logPDiff * 25));
-                const mwSimilarity = Math.max(0, 100 - (mwDiff * 10));
-                
-                // Combined similarity
-                drug.similarity = Math.round((logPSimilarity + mwSimilarity) / 2);
-            });
+            if (cCount > 8 && oCount === 0) {
+                uses.push("可能是烷烴，用作燃料或潤滑油");
+            }
             
-            // Sort by similarity (highest first)
-            drugDatabase.sort((a, b) => b.similarity - a.similarity);
+            if (oCount > 0 && nCount > 0) {
+                uses.push("可能有生物活性，用於醫藥或農藥");
+            }
             
-            // Return top 4
-            return drugDatabase.slice(0, 4);
+            // 如果沒有找到特定用途，添加一些一般性描述
+            if (uses.length === 0) {
+                if (cCount > 0 && oCount === 0 && nCount === 0) {
+                    uses.push("有機化合物，可能用於合成材料");
+                } else if (oCount > 0) {
+                    uses.push("含氧化合物，可能有特定用途");
+                } else {
+                    uses.push("化學研究或合成的原料");
+                }
+            }
+            
+            return uses;
         }
 
         function displayMoleculeProperties(properties) {
-            // Display basic properties
+            // 顯示基本特性
             const basicPropsEl = document.getElementById('basic-properties');
             basicPropsEl.innerHTML = `
                 <div class="flex justify-between">
@@ -797,73 +808,123 @@
                 </div>
                 <div class="flex justify-between">
                     <span>分子量:</span>
-                    <span class="font-medium">${properties.molecularWeight.toFixed(2)}</span>
+                    <span class="font-medium">${properties.molecularWeight.toFixed(2)} 克/莫爾</span>
                 </div>
                 <div class="flex justify-between">
                     <span>原子數:</span>
-                    <span class="font-medium">${properties.numAtoms}</span>
+                    <span class="font-medium">${properties.numAtoms} 個</span>
                 </div>
                 <div class="flex justify-between">
                     <span>鍵數:</span>
-                    <span class="font-medium">${properties.numBonds}</span>
+                    <span class="font-medium">${properties.numBonds} 個</span>
                 </div>
             `;
             
-            // Display drug-like properties
-            const drugPropsEl = document.getElementById('drug-properties');
-            drugPropsEl.innerHTML = `
-                <div class="flex justify-between">
-                    <span>LogP:</span>
-                    <span class="font-medium">${properties.logP.toFixed(2)}</span>
-                </div>
-                <div class="flex justify-between">
-                    <span>氫鍵供體:</span>
-                    <span class="font-medium">${properties.hBondDonors}</span>
-                </div>
-                <div class="flex justify-between">
-                    <span>氫鍵受體:</span>
-                    <span class="font-medium">${properties.hBondAcceptors}</span>
-                </div>
-                <div class="flex justify-between">
-                    <span>Lipinski違反:</span>
-                    <span class="font-medium ${properties.lipinskiViolations > 1 ? 'text-danger' : 'text-success'}">${properties.lipinskiViolations}</span>
-                </div>
-            `;
-            
-            // Display toxicity predictions chart
-            displayToxicityChart(properties);
-            
-            // Display similar drugs
-            displaySimilarDrugs(properties.similarDrugs);
-        }
-
-        function displayToxicityChart(properties) {
-            const ctx = document.getElementById('toxicity-chart').getContext('2d');
-            
-            // Check if there's an existing chart
-            if (window.toxicityChart) {
-                window.toxicityChart.destroy();
+            // 顯示物理特性
+            const physicalPropsEl = document.getElementById('physical-properties');
+            if (physicalPropsEl) {
+                physicalPropsEl.innerHTML = `
+                    <div class="flex justify-between">
+                        <span>極性:</span>
+                        <span class="font-medium">${getPolarityDescription(properties.polarity)}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>水溶性:</span>
+                        <span class="font-medium">${getSolubilityDescription(properties.waterSolubility)}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>估計熔點:</span>
+                        <span class="font-medium">${properties.meltingPoint.toFixed(0)}°C</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>估計沸點:</span>
+                        <span class="font-medium">${properties.boilingPoint.toFixed(0)}°C</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>估計密度:</span>
+                        <span class="font-medium">${properties.density.toFixed(2)} g/cm³</span>
+                    </div>
+                `;
             }
             
-            // Create a new chart
-            window.toxicityChart = new Chart(ctx, {
+            // 顯示化學特性
+            const chemicalPropsEl = document.getElementById('chemical-properties');
+            if (chemicalPropsEl) {
+                chemicalPropsEl.innerHTML = `
+                    <div class="flex justify-between">
+                        <span>氧化傾向:</span>
+                        <span class="font-medium">${properties.reactivity.oxidation}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>還原傾向:</span>
+                        <span class="font-medium">${properties.reactivity.reduction}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>酸性特徵:</span>
+                        <span class="font-medium">${properties.reactivity.acid}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>鹼性特徵:</span>
+                        <span class="font-medium">${properties.reactivity.base}</span>
+                    </div>
+                `;
+            }
+            
+            // 顯示極性和溶解性圖表
+            displayPolarityChart(properties);
+            
+            // 顯示日常應用
+            displayCommonUses(properties.commonUses);
+        }
+        
+        // 根據數值描述極性
+        function getPolarityDescription(value) {
+            if (value < 0.2) return "非極性";
+            if (value < 0.4) return "微極性";
+            if (value < 0.6) return "中等極性";
+            if (value < 0.8) return "高極性";
+            return "極高極性";
+        }
+        
+        // 根據數值描述溶解性
+        function getSolubilityDescription(value) {
+            if (value < 0.2) return "難溶於水";
+            if (value < 0.4) return "微溶於水";
+            if (value < 0.6) return "部分溶於水";
+            if (value < 0.8) return "易溶於水";
+            return "高度可溶";
+        }
+
+        function displayPolarityChart(properties) {
+            const ctx = document.getElementById('polarity-chart').getContext('2d');
+            
+            // 檢查是否已有圖表
+            if (window.polarityChart) {
+                window.polarityChart.destroy();
+            }
+            
+            // 創建比較圖表
+            window.polarityChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: ['肝臟毒性', '心臟毒性', '致突變性', '血腦屏障穿透性'],
+                    labels: ['極性', '水溶性'],
                     datasets: [{
-                        label: '預測風險指數 (0-1)',
+                        label: '當前分子',
                         data: [
-                            properties.liverToxicity,
-                            properties.cardioToxicity,
-                            properties.mutagenicPotential,
-                            properties.bbbPermeation
+                            properties.polarity,
+                            properties.waterSolubility
                         ],
-                        backgroundColor: [
-                            properties.liverToxicity > 0.5 ? '#F44336' : '#4CAF50',
-                            properties.cardioToxicity > 0.5 ? '#F44336' : '#4CAF50',
-                            properties.mutagenicPotential > 0.5 ? '#F44336' : '#4CAF50',
-                            properties.bbbPermeation > 0.5 ? '#F44336' : '#4CAF50'
-                        ]
+                        backgroundColor: '#5D5CDE'
+                    },
+                    {
+                        label: '參考: 水',
+                        data: [1.0, 1.0],
+                        backgroundColor: '#4DA6FF'
+                    },
+                    {
+                        label: '參考: 己烷',
+                        data: [0.1, 0.05],
+                        backgroundColor: '#FF8A5B'
                     }]
                 },
                 options: {
@@ -873,6 +934,10 @@
                         y: {
                             beginAtZero: true,
                             max: 1,
+                            title: {
+                                display: true,
+                                text: '值 (0-1)'
+                            },
                             grid: {
                                 color: 'rgba(200, 200, 200, 0.2)'
                             }
@@ -885,37 +950,51 @@
                     },
                     plugins: {
                         legend: {
-                            display: false
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.raw;
+                                    if (context.datasetIndex === 0) {
+                                        if (context.dataIndex === 0) {
+                                            return `極性: ${getPolarityDescription(value)} (${value.toFixed(2)})`;
+                                        } else {
+                                            return `水溶性: ${getSolubilityDescription(value)} (${value.toFixed(2)})`;
+                                        }
+                                    }
+                                    return context.dataset.label + ': ' + value.toFixed(2);
+                                }
+                            }
                         }
                     }
                 }
             });
         }
 
-        function displaySimilarDrugs(drugs) {
-            const container = document.getElementById('similar-drugs');
+        function displayCommonUses(uses) {
+            const container = document.getElementById('common-uses');
+            if (!container) return;
+            
             container.innerHTML = '';
             
-            if (drugs.length === 0) {
-                container.innerHTML = '<p class="text-gray-500 dark:text-gray-400">沒有找到相似藥物</p>';
+            if (uses.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 dark:text-gray-400">沒有找到常見用途</p>';
                 return;
             }
             
-            drugs.forEach(drug => {
-                const drugEl = document.createElement('div');
-                drugEl.className = 'p-2 border dark:border-gray-600 rounded-md';
-                drugEl.innerHTML = `
-                    <div class="font-medium">${drug.name}</div>
-                    <div class="text-xs text-gray-500 dark:text-gray-400">${drug.purpose}</div>
-                    <div class="mt-1">
-                        <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-1.5">
-                            <div class="bg-primary h-1.5 rounded-full" style="width: ${drug.similarity}%"></div>
-                        </div>
-                        <div class="text-xs text-right mt-0.5">${drug.similarity}% 相似</div>
-                    </div>
-                `;
-                container.appendChild(drugEl);
+            const usesList = document.createElement('ul');
+            usesList.className = 'list-disc pl-5';
+            
+            uses.forEach(use => {
+                const listItem = document.createElement('li');
+                listItem.className = 'mb-1';
+                listItem.textContent = use;
+                usesList.appendChild(listItem);
             });
+            
+            container.appendChild(usesList);
         }
 
         function updateChallengeDisplay() {
