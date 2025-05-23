@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MoleculeGenie: 互動化學學習</title>
     <script src="https://cdn.jsdelivr.net/npm/smiles-drawer@1.2.0/dist/smiles-drawer.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/rdkit@2023.3.3/Code/MinimalLib/dist/RDKit_minimal.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/3dmol@2.0.1/build/3Dmol-min.js"></script>
+    <!-- 移除RDKit，使用純JavaScript替代方案 -->
+    <!-- 移除3DMol，使用SVG替代 -->
     <script src="https://cdn.jsdelivr.net/npm/marked@4.0.2/lib/marked.umd.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -259,17 +259,16 @@
             }
         });
 
-        // Wait for RDKit to initialize
-        window.onRDKitReady = function() {
-            console.log('RDKit is ready');
+        // Initialize application on window load
+        window.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing app');
             initApp();
-        };
+        });
 
         // Main application state
         const appState = {
             currentMolecule: null,
             currentSMILES: '',
-            rdkitInstance: null,
             challenges: [
                 {
                     id: 1,
@@ -406,18 +405,17 @@
         };
 
         function initApp() {
-            // Initialize RDKit
-            appState.rdkitInstance = window.RDKit();
-            
-            // Setup event listeners
+            // 即時設置事件監聽器
             setupEventListeners();
             
-            // Initialize tabs
+            // 初始化頁籤
             initTabs();
             
-            // Initialize first challenge and quiz
+            // 初始化第一個挑戰和測驗
             updateChallengeDisplay();
             updateQuizDisplay();
+            
+            console.log("應用程式已初始化");
         }
 
         function setupEventListeners() {
@@ -499,29 +497,23 @@
             }
             
             try {
-                // Parse SMILES with RDKit
-                const mol = appState.rdkitInstance.get_mol(smilesInput);
-                
-                if (!mol) {
-                    const container = document.getElementById('molecule-container');
-                    container.innerHTML = '<div class="w-full h-full flex items-center justify-center text-danger">無法解析SMILES字符串，請檢查格式</div>';
-                    return;
-                }
-                
-                // Store current molecule and SMILES
-                appState.currentMolecule = mol;
+                // 純JavaScript實現，不再依賴RDKit
+                // 直接儲存SMILES字符串
                 appState.currentSMILES = smilesInput;
                 
-                // Render 2D structure
+                // 創建一個模擬的分子對象
+                appState.currentMolecule = createMoleculeFromSmiles(smilesInput);
+                
+                // 渲染2D結構
                 render2DMolecule(smilesInput);
                 
-                // Render 3D structure
-                render3DMolecule(mol);
+                // 渲染3D結構
+                render3DMolecule(smilesInput);
                 
-                // Calculate and display properties
-                calculateProperties(mol);
+                // 計算及顯示屬性
+                calculateProperties(appState.currentMolecule);
                 
-                // Hide no molecule message
+                // 隱藏無分子消息
                 document.getElementById('no-molecule-message').classList.add('hidden');
                 
             } catch (error) {
@@ -529,6 +521,71 @@
                 const container = document.getElementById('molecule-container');
                 container.innerHTML = '<div class="w-full h-full flex items-center justify-center text-danger">分子渲染錯誤，請檢查SMILES字符串格式</div>';
             }
+        }
+        
+        // 從SMILES創建模擬分子
+        function createMoleculeFromSmiles(smiles) {
+            // 分析SMILES字符串獲取基本信息
+            // 這是簡化的方法，實際的SMILES解析器複雜得多
+            const atomCounts = {};
+            
+            // 計算碳原子
+            const carbonMatches = smiles.match(/C/g);
+            atomCounts.C = carbonMatches ? carbonMatches.length : 0;
+            
+            // 計算氧原子
+            const oxygenMatches = smiles.match(/O/g);
+            atomCounts.O = oxygenMatches ? oxygenMatches.length : 0;
+            
+            // 計算氮原子
+            const nitrogenMatches = smiles.match(/N/g);
+            atomCounts.N = nitrogenMatches ? nitrogenMatches.length : 0;
+            
+            // 計算卤素
+            const halogenMatches = smiles.match(/([FClBrI])/g);
+            atomCounts.Hal = halogenMatches ? halogenMatches.length : 0;
+            
+            // 估計鍵數 (非準確，僅用於演示)
+            const doubleBonds = (smiles.match(/=/g) || []).length;
+            const tripleBonds = (smiles.match(/#/g) || []).length;
+            const ringClosures = (smiles.match(/[0-9]/g) || []).length / 2;
+            const otherBonds = (smiles.match(/[\(\)]/g) || []).length;
+            
+            // 估計總原子數
+            const totalAtoms = atomCounts.C + atomCounts.O + atomCounts.N + atomCounts.Hal;
+            
+            // 估計總鍵數
+            const totalBonds = totalAtoms - 1 + doubleBonds + tripleBonds * 2 + ringClosures;
+            
+            // 估計分子量
+            const mw = atomCounts.C * 12 + atomCounts.O * 16 + atomCounts.N * 14 + atomCounts.Hal * 19 + totalAtoms * 1;
+            
+            // 創建模擬分子對象
+            return {
+                smiles: smiles,
+                atomCounts: atomCounts,
+                totalAtoms: totalAtoms,
+                totalBonds: Math.max(0, totalBonds),
+                molecularWeight: mw,
+                get_formula: function() {
+                    let formula = '';
+                    if (atomCounts.C > 0) formula += 'C' + (atomCounts.C > 1 ? atomCounts.C : '');
+                    if (atomCounts.O > 0) formula += 'O' + (atomCounts.O > 1 ? atomCounts.O : '');
+                    if (atomCounts.N > 0) formula += 'N' + (atomCounts.N > 1 ? atomCounts.N : '');
+                    if (atomCounts.Hal > 0) formula += 'X' + (atomCounts.Hal > 1 ? atomCounts.Hal : '');
+                    formula += 'H' + Math.round(totalAtoms * 1.5); // 粗略估計氫原子數
+                    return formula;
+                },
+                get_mol_wt: function() {
+                    return this.molecularWeight;
+                },
+                get_num_atoms: function() {
+                    return this.totalAtoms;
+                },
+                get_num_bonds: function() {
+                    return this.totalBonds;
+                }
+            };
         }
 
         function render2DMolecule(smiles) {
@@ -553,22 +610,30 @@
             }
         }
 
-        function render3DMolecule(mol) {
+        function render3DMolecule(smiles) {
             const viewer = document.getElementById('molecule-3d-viewer');
             viewer.innerHTML = '';
             
             try {
-                // Get 3D coordinates
-                const molBlock = mol.get_molblock();
+                // 創建一個簡單的3D分子圖示
+                // 對於詳細的3D結構，通常需要使用專門的工具生成坐標
+                viewer.innerHTML = `
+                    <div class="w-full h-full flex flex-col items-center justify-center">
+                        <svg width="100" height="100" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="40" fill="rgba(200,200,200,0.5)" stroke="#333" stroke-width="1" />
+                            <circle cx="30" cy="30" r="10" fill="#ff6666" />
+                            <circle cx="70" cy="30" r="10" fill="#6666ff" />
+                            <circle cx="50" cy="70" r="10" fill="#66ff66" />
+                            <line x1="30" y1="30" x2="70" y2="30" stroke="#333" stroke-width="2" />
+                            <line x1="30" y1="30" x2="50" y2="70" stroke="#333" stroke-width="2" />
+                            <line x1="70" y1="30" x2="50" y2="70" stroke="#333" stroke-width="2" />
+                        </svg>
+                        <div class="text-center text-xs mt-2">簡化3D模型 (SMILES: ${smiles.substring(0, 20)}${smiles.length > 20 ? '...' : ''})</div>
+                    </div>
+                `;
                 
-                // Setup 3Dmol.js viewer
-                const config = { backgroundColor: 'transparent' };
-                const viewer3d = $3Dmol.createViewer(viewer, config);
-                
-                viewer3d.addModel(molBlock, 'mol');
-                viewer3d.setStyle({}, {stick: {radius: 0.2}, sphere: {scale: 0.3}});
-                viewer3d.zoomTo();
-                viewer3d.render();
+                // 注意：在實際應用中，這裡應該使用一個真正的3D分子模型
+                // 但是在沒有適當的坐標生成工具的情況下，這只是一個視覺占位符
             } catch (error) {
                 console.error('3D rendering error:', error);
                 viewer.innerHTML = '<div class="w-full h-full flex items-center justify-center text-danger">無法繪製3D結構</div>';
